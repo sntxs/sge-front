@@ -1,0 +1,89 @@
+.w-250px {
+    width: 250px;
+}
+
+.w-60px {
+    width: 60px;
+}
+
+.transition-width {
+    transition: width 0.3s ease;
+}
+
+.transition-margin {
+    transition: margin-left 0.3s ease;
+}
+
+.submenu-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.submenu-wrapper.open {
+    max-height: 200px; /* Ajuste este valor conforme necessário */
+    transition: max-height 0.3s ease-in;
+}
+
+.submenu {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.submenu-wrapper.open .submenu {
+    opacity: 1;
+    transition: opacity 0.2s ease-in 0.1s;
+}
+
+/* Novo código para o hover quando o menu está fechado */
+.w-60px .menu-item {
+    position: relative;
+}
+
+.w-60px .menu-item:hover .submenu-wrapper {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background-color: #343a40;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    max-height: none;
+    width: 200px;
+    z-index: 1051;
+}
+
+.w-60px .menu-item:hover .submenu {
+    opacity: 1;
+}
+
+.w-60px .menu-item:hover .submenu-wrapper,
+.w-60px .menu-item:hover .submenu {
+    transition: all 0.3s ease-in;
+}
+
+/* Novo código para centralizar as setas */
+.menu-item button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.menu-item button .menu-text {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.menu-item button .menu-icon {
+    margin-right: 10px;
+}
+
+.menu-item button .arrow-icon {
+    margin-left: 10px;
+}
+
+/* Ajuste no z-index do menu lateral quando fechado */
+#menu-left {
+    z-index: 1050;
+}

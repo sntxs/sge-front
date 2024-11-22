@@ -1,0 +1,35 @@
+.botaoLogin {
+    height: 40px;
+    width: 50%;
+    margin-left: 25%;
+    background-color: #212529;
+    color: white;
+    border: none;
+    transition: 0.3s;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.botaoLogin:hover {
+    background-color: #63676b;
+    transition: 0.3s;
+}
+
+.card-body {
+    padding: 4rem !important;
+}
+
+.pantanal-logo {
+    width: 80%;
+    max-width: 300px;
+    margin-bottom: 50px;
+}
+
+/* Remove o ícone de olho nativo do input password */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-inner-spin-button,
+input[type="password"]::-webkit-clear-button,
+input[type="password"]::-webkit-password-toggle-button {
+    display: none;
+}

@@ -1,0 +1,22 @@
+/*  */
+.pagination {
+  margin-bottom: 0;
+}
+
+.page-link {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.page-item.disabled .page-link {
+  cursor: not-allowed;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.list-group-item {
+  padding: 0.5rem 1rem;
+}

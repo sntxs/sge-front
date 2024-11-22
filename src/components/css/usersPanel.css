@@ -1,0 +1,73 @@
+/* Centralizar títulos */
+.text-center {
+    text-align: center;
+}
+
+/* Alinhar conteúdo das células à esquerda */
+.table td {
+    text-align: left;
+}
+
+/* Adicionar espaçamento igual para th e td */
+.table th,
+.table td {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    cursor: pointer;
+}
+
+.page-item.disabled .page-link {
+    cursor: not-allowed;
+}
+
+th {
+    user-select: none;
+}
+
+th:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sort-icon {
+    margin-left: 5px;
+}
+
+.search-container {
+    position: relative;
+    width: 50%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 1;
+    margin-left: 10px;
+}
+
+.search-input {
+    width: 50%;
+    padding: 8px 35px;
+    border: none;
+    border-bottom: 2px solid #dee2e6;
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+    background: transparent;
+}
+
+.search-input:focus {
+    border-bottom-color: #0d6efd;
+}
+
+.search-input::placeholder {
+    color: #6c757d;
+}
