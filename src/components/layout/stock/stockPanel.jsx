@@ -48,7 +48,6 @@ function PainelStock({ username, onLogout }) {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-
       setFormData({
         name: '',
         description: '',

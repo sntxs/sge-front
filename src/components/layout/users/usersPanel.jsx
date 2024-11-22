@@ -24,7 +24,8 @@ function UsersPanel({ username, onLogout }) {
     cpf: '',
     username: '',
     password: '',
-    isAdmin: false
+    sectorName: '',
+    isAdmin: false,
   });
   const [showAlert, setShowAlert] = useState(false);
   const [showPasswordAlert, setShowPasswordAlert] = useState(false);
@@ -62,7 +63,8 @@ function UsersPanel({ username, onLogout }) {
         cpf: cleanCPF,
         username: formData.username,
         password: formData.password,
-        isAdmin: formData.isAdmin
+        isAdmin: formData.isAdmin,
+        sectorName: formData.sectorName
       },
         {
           headers: {
@@ -79,7 +81,8 @@ function UsersPanel({ username, onLogout }) {
           cpf: '',
           username: '',
           password: '',
-          isAdmin: false
+          isAdmin: false,
+          sectorName: ''
         });
         setShowModal(false);
         setShowAlert(true);
@@ -147,7 +150,9 @@ function UsersPanel({ username, onLogout }) {
         cpf: cleanCPF,
         phoneNumber: cleanPhoneNumber,
         //password: formData.password || undefined,
-        isAdmin: currentUser.isAdmin // Adicionando a permissão de administrador
+        isAdmin: currentUser.isAdmin, // Adicionando a permissão de administrador
+        sectorName: currentUser.sectorName,
+
       },
         {
           headers: {
@@ -471,6 +476,18 @@ function UsersPanel({ username, onLogout }) {
                   </div>
                 </div>
                 <div className="mb-3">
+                  <label htmlFor="sectorName" className="form-label">Setor</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="sectorName"
+                    name="sectorName"
+                    value={formData.sectorName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
                   <label className="form-label">Permissão Administrador</label>
                   <div>
                     <ToggleButtonGroup
@@ -479,18 +496,20 @@ function UsersPanel({ username, onLogout }) {
                       value={formData.isAdmin ? 1 : 0}
                       onChange={(val) => setFormData(prevState => ({ ...prevState, isAdmin: val === 1 }))}
                     >
-                      <ToggleButton id="tbg-radio-1" value={1} variant="success" className="toggle-button-success">
+                      <ToggleButton id="tbg-radio-1" value={1} variant={formData.isAdmin ? "primary" : "light"} className={formData.isAdmin ? "toggle-button-primary" : "toggle-button-light"}>
                         Sim
                       </ToggleButton>
-                      <ToggleButton id="tbg-radio-2" value={0} variant="danger" className="toggle-button-danger">
+                      <ToggleButton id="tbg-radio-2" value={0} variant={formData.isAdmin ? "light" : "primary"} className={formData.isAdmin ? "toggle-button-light" : "toggle-button-primary"}>
                         Não
                       </ToggleButton>
                     </ToggleButtonGroup>
                   </div>
                 </div>
-                <Button variant="success" type="submit">
-                  Cadastrar
-                </Button>
+                <Modal.Footer>
+                  <Button className='right' variant="primary" type="submit">
+                    Cadastrar
+                  </Button>
+                </Modal.Footer>
               </form>
             </Modal.Body>
           </Modal>
@@ -504,7 +523,7 @@ function UsersPanel({ username, onLogout }) {
         {/* Tabela de Usuários */}
         <table className="table table-striped">
           <thead>
-            <tr>
+            <tr className='text-uppercase'>
               <th className="text-center fw-bold" onClick={() => sortItems('name')} style={{ cursor: 'pointer' }}>
                 Nome {getSortIcon('name')}
               </th>
@@ -520,6 +539,9 @@ function UsersPanel({ username, onLogout }) {
               <th className="text-center fw-bold" onClick={() => sortItems('username')} style={{ cursor: 'pointer' }}>
                 Nome de Usuário {getSortIcon('username')}
               </th>
+              <th className="text-center fw-bold" onClick={() => sortItems('sectorName')} style={{ cursor: 'pointer' }}>
+                Setor {getSortIcon('sectorName')}
+              </th>
               <th className="text-center fw-bold" onClick={() => sortItems('isAdmin')} style={{ cursor: 'pointer' }}>
                 Permissão de Administrador {getSortIcon('isAdmin')}
               </th>
@@ -534,6 +556,7 @@ function UsersPanel({ username, onLogout }) {
                 <td className="align-middle text-center">{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
                 <td className="align-middle text-center">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
                 <td className="align-middle text-center">{user.username}</td>
+                <td className="align-middle text-center">{user.sectorName}</td>
                 <td className="align-middle text-center">{user.isAdmin ? 'Sim' : 'Não'}</td>
                 <td className="align-middle text-center">
                   <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(user)}>
@@ -671,6 +694,14 @@ function UsersPanel({ username, onLogout }) {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </Form.Group> */}
+              <Form.Group controlId="formSector">
+                <Form.Label>Setor</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={currentUser.sectorName}
+                  onChange={(e) => setCurrentUser({ ...currentUser, sectorName: e.target.value })}
+                />
+              </Form.Group>
               <Form.Group controlId="formIsAdmin">
                 <Form.Label>Permissão Administrador</Form.Label>
                 <div>
