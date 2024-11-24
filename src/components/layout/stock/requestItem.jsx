@@ -19,6 +19,7 @@ const RequestItem = ({ username, onLogout }) => {
     const [formData, setFormData] = useState({
         productId: '',
         userId: id,
+        userSectorName: '',
         quantity: '',
         dataSolicitacao: new Date().toISOString().split('T')[0]
     });
@@ -103,6 +104,7 @@ const RequestItem = ({ username, onLogout }) => {
                 setFormData({
                     productId: '',
                     userId: localStorage.getItem('userId'),
+                    userSectorName: '',
                     quantity: '',
                     dataSolicitacao: new Date().toISOString().split('T')[0]
                 });
@@ -155,6 +157,7 @@ const RequestItem = ({ username, onLogout }) => {
         const dataToExport = filteredRequestedItems.map(item => ({
             'Produto': item.productName,
             'Solicitante': item.userName,
+            'Setor': item.userSectorName,
             'Quantidade': item.quantity,
             'Data de Solicitação': formatDate(item.createdAt)
         }));
@@ -204,6 +207,7 @@ const RequestItem = ({ username, onLogout }) => {
             <div className="flex-grow-1 p-4">
                 <h1 className="text-center">Solicitar Item</h1>
 
+                {/* Barra de pesquisa e botões */}
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div className="search-container position-relative">
                         <FaSearch className="search-icon" />
@@ -229,6 +233,7 @@ const RequestItem = ({ username, onLogout }) => {
                     </div>
                 </div>
 
+                {/* Tabela de Solicitações */}
                 <div className="table-responsive">
                     <table className="table table-striped">
                         <thead>
@@ -238,6 +243,9 @@ const RequestItem = ({ username, onLogout }) => {
                                 </th>
                                 <th className="text-center fw-bold" onClick={() => sortItems('userName')} style={{ cursor: 'pointer' }}>
                                     Solicitante {getSortIcon('userName')}
+                                </th>
+                                <th className="text-center fw-bold" onClick={() => sortItems('userSectorName')} style={{ cursor: 'pointer' }}>
+                                    Setor {getSortIcon('userSectorName')}
                                 </th>
                                 <th className="text-center fw-bold" onClick={() => sortItems('quantity')} style={{ cursor: 'pointer' }}>
                                     Quantidade {getSortIcon('quantity')}
@@ -253,6 +261,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 <tr key={index}>
                                     <td className="align-middle text-center">{item.productName}</td>
                                     <td className="align-middle text-center">{item.userName}</td>
+                                    <td className="align-middle text-center">{item.userSectorName}</td>
                                     <td className="align-middle text-center">{item.quantity}</td>
                                     <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
                                     <td className="align-middle text-center">
