@@ -107,14 +107,14 @@ function SideMenu({ username, onLogout }) {
                                 </button>
                                 <div className={`submenu-wrapper ${menuOpen && usuariosOpen ? 'open' : ''}`}>
                                     <ul className="list-unstyled ms-4 mt-2 submenu">
-{/*                                         <li className="mb-2">
-                                            <Link to="/add-user" className="text-white text-decoration-none">
-                                                Adicionar Usuário
-                                            </Link>
-                                        </li> */}
                                         <li>
                                             <Link to="/user-panel" className="text-white text-decoration-none">
                                                 Painel de Usuários
+                                            </Link>
+                                        </li>
+                                        <li className="mt-2">
+                                            <Link to="/sector-panel" className="text-white text-decoration-none">
+                                                Painel de Setores
                                             </Link>
                                         </li>
                                     </ul>

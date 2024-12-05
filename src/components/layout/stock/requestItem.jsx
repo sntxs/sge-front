@@ -157,7 +157,7 @@ const RequestItem = ({ username, onLogout }) => {
         const dataToExport = filteredRequestedItems.map(item => ({
             'Produto': item.productName,
             'Solicitante': item.userName,
-            'Setor': item.userSectorName,
+            'Setor': item.userSector.name,
             'Quantidade': item.quantity,
             'Data de Solicitação': formatDate(item.createdAt)
         }));
@@ -244,8 +244,8 @@ const RequestItem = ({ username, onLogout }) => {
                                 <th className="text-center fw-bold" onClick={() => sortItems('userName')} style={{ cursor: 'pointer' }}>
                                     Solicitante {getSortIcon('userName')}
                                 </th>
-                                <th className="text-center fw-bold" onClick={() => sortItems('userSectorName')} style={{ cursor: 'pointer' }}>
-                                    Setor {getSortIcon('userSectorName')}
+                                <th className="text-center fw-bold" onClick={() => sortItems('userSector.name')} style={{ cursor: 'pointer' }}>
+                                    Setor {getSortIcon('userSector.name')}
                                 </th>
                                 <th className="text-center fw-bold" onClick={() => sortItems('quantity')} style={{ cursor: 'pointer' }}>
                                     Quantidade {getSortIcon('quantity')}
@@ -261,7 +261,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 <tr key={index}>
                                     <td className="align-middle text-center">{item.productName}</td>
                                     <td className="align-middle text-center">{item.userName}</td>
-                                    <td className="align-middle text-center">{item.userSectorName}</td>
+                                    <td className="align-middle text-center">{item.userSector.name}</td>
                                     <td className="align-middle text-center">{item.quantity}</td>
                                     <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
                                     <td className="align-middle text-center">

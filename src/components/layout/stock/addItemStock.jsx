@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Adicionado useEffect
+/* import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import SideMenu from '../side-menu';
 import { Modal, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -147,8 +147,6 @@ function AddItemStock({ username, onLogout }) {
           </Modal.Body>
         </Modal>
         <button className="btn btn-primary mx-5" onClick={() => navigate('/stock-panel')}>Ver Estoque</button>
-
-        {/* Modal de Sucesso */}
         <Modal
           show={showSuccessModal}
           onHide={handleCloseSuccessModal}
@@ -166,8 +164,6 @@ function AddItemStock({ username, onLogout }) {
             </Button>
           </Modal.Footer>
         </Modal>
-
-        {/* Modal de Erro */}
         <Modal
           show={showErrorModal}
           onHide={() => setShowErrorModal(false)}
@@ -178,7 +174,6 @@ function AddItemStock({ username, onLogout }) {
           </Modal.Header>
           <Modal.Body>
             <p>
-              {/* {errorMessage} */}
               Item já cadastrado!
             </p>
           </Modal.Body>
@@ -194,3 +189,4 @@ function AddItemStock({ username, onLogout }) {
 }
 
 export default AddItemStock;
+ */

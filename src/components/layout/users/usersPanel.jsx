@@ -24,13 +24,13 @@ function UsersPanel({ username, onLogout }) {
     cpf: '',
     username: '',
     password: '',
-    sectorName: '',
+    sectorId: '',
     isAdmin: false,
   });
   const [showAlert, setShowAlert] = useState(false);
   const [showPasswordAlert, setShowPasswordAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-
+  const [sectors, setSectors] = useState([]);
 
   const togglePasswordVisibility = () => {
     setFormData(prevState => ({
@@ -64,7 +64,7 @@ function UsersPanel({ username, onLogout }) {
         username: formData.username,
         password: formData.password,
         isAdmin: formData.isAdmin,
-        sectorName: formData.sectorName
+        sectorId: formData.sectorId
       },
         {
           headers: {
@@ -82,7 +82,7 @@ function UsersPanel({ username, onLogout }) {
           username: '',
           password: '',
           isAdmin: false,
-          sectorName: ''
+          sectorId: ''
         });
         setShowModal(false);
         setShowAlert(true);
@@ -99,9 +99,11 @@ function UsersPanel({ username, onLogout }) {
   };
 
 
-  /*   const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordError, setPasswordError] = useState(''); */
+  /*   
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(''); 
+  */
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -123,6 +125,23 @@ function UsersPanel({ username, onLogout }) {
     };
 
     fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchSectors = async () => {
+      try {
+        const response = await axios.get(`${API_URL_GLOBAL}/Sector/`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setSectors(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar setores:', error);
+      }
+    };
+
+    fetchSectors();
   }, []);
 
   const handleEdit = (user) => {
@@ -149,10 +168,8 @@ function UsersPanel({ username, onLogout }) {
         ...currentUser,
         cpf: cleanCPF,
         phoneNumber: cleanPhoneNumber,
-        //password: formData.password || undefined,
-        isAdmin: currentUser.isAdmin, // Adicionando a permissão de administrador
-        sectorName: currentUser.sectorName,
-
+        isAdmin: currentUser.isAdmin,
+        sectorId: currentUser.sectorId
       },
         {
           headers: {
@@ -232,7 +249,8 @@ function UsersPanel({ username, onLogout }) {
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phoneNumber.includes(searchTerm) ||
     user.cpf.includes(searchTerm) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.sector.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const exportToExcel = () => {
@@ -243,7 +261,8 @@ function UsersPanel({ username, onLogout }) {
       'Telefone': user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3'),
       'CPF': user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'),
       'Nome de Usuário': user.username,
-      'Administrador': user.isAdmin ? 'Sim' : 'Não'
+      'Administrador': user.isAdmin ? 'Sim' : 'Não',
+      'Setor': user.sector.name
     }));
 
     // Criar planilha
@@ -257,6 +276,7 @@ function UsersPanel({ username, onLogout }) {
       { wch: 20 }, // CPF
       { wch: 20 }, // Nome de Usuário
       { wch: 15 }, // Administrador
+      { wch: 20 }, // Setor
     ];
     ws['!cols'] = columnWidths;
 
@@ -329,8 +349,10 @@ function UsersPanel({ username, onLogout }) {
     setSortConfig({ key, direction });
 
     const sortedUsers = [...users].sort((a, b) => {
-      if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
-      if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
+      const aValue = key === 'sectorName' ? a.sector.name : a[key];
+      const bValue = key === 'sectorName' ? b.sector.name : b[key];
+      if (aValue < bValue) return direction === 'ascending' ? -1 : 1;
+      if (aValue > bValue) return direction === 'ascending' ? 1 : -1;
       return 0;
     });
     setUsers(sortedUsers);
@@ -476,16 +498,21 @@ function UsersPanel({ username, onLogout }) {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="sectorName" className="form-label">Setor</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="sectorName"
-                    name="sectorName"
-                    value={formData.sectorName}
+                  <label htmlFor="sectorId" className="form-label">Setor</label>
+                  <Form.Select
+                    id="sectorId"
+                    name="sectorId"
+                    value={formData.sectorId}
                     onChange={handleInputChange}
                     required
-                  />
+                  >
+                    <option value="">Selecione um setor</option>
+                    {sectors.map(sector => (
+                      <option key={sector.id} value={sector.id}>
+                        {sector.name}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Permissão Administrador</label>
@@ -556,7 +583,7 @@ function UsersPanel({ username, onLogout }) {
                 <td className="align-middle text-center">{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
                 <td className="align-middle text-center">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
                 <td className="align-middle text-center">{user.username}</td>
-                <td className="align-middle text-center">{user.sectorName}</td>
+                <td className="align-middle text-center">{user.sector.name}</td>
                 <td className="align-middle text-center">{user.isAdmin ? 'Sim' : 'Não'}</td>
                 <td className="align-middle text-center">
                   <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(user)}>
@@ -696,11 +723,17 @@ function UsersPanel({ username, onLogout }) {
               </Form.Group> */}
               <Form.Group controlId="formSector">
                 <Form.Label>Setor</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentUser.sectorName}
-                  onChange={(e) => setCurrentUser({ ...currentUser, sectorName: e.target.value })}
-                />
+                <Form.Select
+                  value={currentUser.sectorId}
+                  onChange={(e) => setCurrentUser({ ...currentUser, sectorId: e.target.value })}
+                >
+                  <option value="">Selecione um setor</option>
+                  {sectors.map(sector => (
+                    <option key={sector.id} value={sector.id}>
+                      {sector.name}
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
               <Form.Group controlId="formIsAdmin">
                 <Form.Label>Permissão Administrador</Form.Label>
