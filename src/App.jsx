@@ -8,7 +8,13 @@ import RequestItem from './components/layout/stock/requestItem';
 //import AddUsers from './components/layout/users/addUsers';
 import UsersPanel from './components/layout/users/usersPanel';
 import SectorPanel from './components/layout/users/sectorPanel';
+import Profile from './components/layout/users/profile';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+function PrivateRoute({ children }) {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  return isLoggedIn ? children : <Navigate to="/login" />;
+}
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -54,25 +60,40 @@ function App() {
               isLoggedIn ? <Navigate to={initialRoute} /> : <Login onLoginSuccess={handleLoginSuccess} />
             } />
             <Route path="/home" element={
-              isLoggedIn ? <Home username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
+              <PrivateRoute>
+                <Home username={username} onLogout={handleLogout} />
+              </PrivateRoute>
+            } />
+            <Route path="/profile" element={
+              <PrivateRoute>
+                <Profile username={username} onLogout={handleLogout} />
+              </PrivateRoute>
             } />
 {/*             <Route path="/add-item" element={
               isLoggedIn ? <AddItemStock username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
             } /> */}
             <Route path="/stock-panel" element={
-              isLoggedIn ? <StockPanel username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
+              <PrivateRoute>
+                <StockPanel username={username} onLogout={handleLogout} />
+              </PrivateRoute>
             } />
             <Route path="/request-item" element={
-              isLoggedIn ? <RequestItem username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
+              <PrivateRoute>
+                <RequestItem username={username} onLogout={handleLogout} />
+              </PrivateRoute>
             } />
 {/*             <Route path="/add-user" element={
               isLoggedIn ? <AddUsers username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
             } /> */}
             <Route path="/user-panel" element={
-              isLoggedIn ? <UsersPanel username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
+              <PrivateRoute>
+                <UsersPanel username={username} onLogout={handleLogout} />
+              </PrivateRoute>
             } />
             <Route path="/sector-panel" element={
-              isLoggedIn ? <SectorPanel username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
+              <PrivateRoute>
+                <SectorPanel username={username} onLogout={handleLogout} />
+              </PrivateRoute>
             } />
             <Route path="/" element={isLoggedIn ? <Navigate to={initialRoute} /> : <Navigate to="/login" />} />
           </Routes>

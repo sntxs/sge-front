@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserCircle, FaBars, FaTimes, FaHome, FaBoxes, FaUserPlus, FaSignOutAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaUserCircle, FaBars, FaTimes, FaHome, FaBoxes, FaUserPlus, FaSignOutAlt, FaChevronDown, FaChevronUp, FaUser } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 
 import '../css/side-menu.css';
@@ -8,6 +8,7 @@ function SideMenu({ username, onLogout }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [estoqueOpen, setEstoqueOpen] = useState(false);
     const [usuariosOpen, setUsuariosOpen] = useState(false);
+    const [userDropdownOpen, setUserDropdownOpen] = useState(false);
     const navigate = useNavigate();
 
     const toggleMenu = () => {
@@ -49,9 +50,30 @@ function SideMenu({ username, onLogout }) {
                     {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
                 </button>
                 <div className="p-3">
-                    <div className="d-flex align-items-center mb-5">
-                        <FaUserCircle className="me-2" size={48} />
-                        {menuOpen && <span>{username}</span>}
+                    <div className="mb-5 menu-item">
+                        <button 
+                            className="btn btn-dark d-flex align-items-center w-100 p-0"
+                            onClick={() => menuOpen && setUserDropdownOpen(!userDropdownOpen)}
+                        >
+                            <span className="menu-icon"><FaUserCircle size={20} /></span>
+                            {menuOpen && (
+                                <>
+                                    <span className="menu-text">{username}</span>
+                                    <span className="arrow-icon">
+                                        {userDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                    </span>
+                                </>
+                            )}
+                        </button>
+                        <div className={`submenu-wrapper ${menuOpen && userDropdownOpen ? 'open' : ''}`}>
+                            <ul className="list-unstyled ms-4 mt-2 submenu">
+                                <li>
+                                    <Link to="/profile" className="text-white text-decoration-none">
+                                        Meu Perfil
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <nav>
                         <ul className="list-unstyled">
@@ -75,11 +97,6 @@ function SideMenu({ username, onLogout }) {
                                 </button>
                                 <div className={`submenu-wrapper ${menuOpen && estoqueOpen ? 'open' : ''}`}>
                                     <ul className="list-unstyled ms-4 mt-2 submenu">
-{/*                                         <li className="mb-2" style={{ display: localStorage.getItem('isAdmin') === 'false' ? 'none' : 'block' }}>
-                                            <Link to="/add-item" className="text-white text-decoration-none">
-                                                Adicionar Item
-                                            </Link>
-                                        </li> */}
                                         <li className="mb-2" style={{ display: localStorage.getItem('isAdmin') === 'false' ? 'none' : 'block' }}>
                                             <Link to="/request-item" className="text-white text-decoration-none">
                                                 Solicitar Item

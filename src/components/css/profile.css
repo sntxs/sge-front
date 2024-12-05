@@ -1,0 +1,90 @@
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-group {
+    margin-bottom: 1rem;
+}
+
+.info-group label {
+    display: block;
+    font-weight: bold;
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.info-group input.form-control {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    font-size: 1rem;
+    color: #495057;
+    cursor: default;
+}
+
+.info-group input.form-control:read-only {
+    background-color: #f8f9fa;
+    box-shadow: none;
+}
+
+.info-group input.form-control:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+.btn-primary {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+}
+
+.user-dropdown {
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+    
+    .info-group input.form-control {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.bg-success {
+    background-color: #198754 !important;
+}
+
+.modal-header.bg-danger, .modal-header.bg-success {
+    border-bottom: none;
+}
+
+.modal-footer {
+    border-top: none;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-success {
+    color: #198754 !important;
+} 

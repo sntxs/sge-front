@@ -145,7 +145,10 @@ function UsersPanel({ username, onLogout }) {
   }, []);
 
   const handleEdit = (user) => {
-    setCurrentUser(user);
+    setCurrentUser({
+      ...user,
+      sectorId: user.sector.id
+    });
     setShowEditModal(true);
   };
 
