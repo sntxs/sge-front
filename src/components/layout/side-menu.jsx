@@ -43,6 +43,8 @@ function SideMenu({ username, onLogout }) {
         }
     }, [menuOpen]);
 
+    const userTitle = localStorage.getItem('isAdmin') === 'true' ? 'Administrador' : 'Usuário';
+
     return (
         <>
             <div id='menu-left' className={`bg-dark text-white ${menuOpen ? 'w-250px' : 'w-60px'} min-vh-100 position-fixed transition-width`}>
@@ -52,14 +54,18 @@ function SideMenu({ username, onLogout }) {
                 <div className="p-3">
                     <div className="mb-5 menu-item">
                         <button 
+                            style={{ backgroundColor: 'transparent', border: 'none' }}
                             className="btn btn-dark d-flex align-items-center w-100 p-0"
                             onClick={() => menuOpen && setUserDropdownOpen(!userDropdownOpen)}
                         >
                             <span className="menu-icon"><FaUserCircle size={20} /></span>
                             {menuOpen && (
                                 <>
-                                    <span className="menu-text">{username}</span>
-                                    <span className="arrow-icon">
+                                    <div className="d-flex flex-column">
+                                        <span className="menu-text">{username}</span>
+                                        <small className="menu-text-2">{userTitle}</small>
+                                    </div>
+                                    <span className="arrow-icon ms-auto">
                                         {userDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
                                     </span>
                                 </>
@@ -97,7 +103,7 @@ function SideMenu({ username, onLogout }) {
                                 </button>
                                 <div className={`submenu-wrapper ${menuOpen && estoqueOpen ? 'open' : ''}`}>
                                     <ul className="list-unstyled ms-4 mt-2 submenu">
-                                        <li className="mb-2" style={{ display: localStorage.getItem('isAdmin') === 'false' ? 'none' : 'block' }}>
+                                        <li className="mb-2">
                                             <Link to="/request-item" className="text-white text-decoration-none">
                                                 Solicitar Item
                                             </Link>

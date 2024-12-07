@@ -315,19 +315,21 @@ function PainelStock({ username, onLogout }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div>
+          <div className="d-flex gap-2">
             <button
-              className="btn btn-primary me-2"
+              className="btn btn-primary"
               onClick={() => navigate('/request-item')}
             >
-              Itens Solicitados
+              Solicitar Item
             </button>
-            <button
-              className="btn btn-primary me-2"
-              onClick={() => setShowModal(true)}
-            >
-              Adicionar Item
-            </button>
+            {localStorage.getItem('isAdmin') === 'true' && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowModal(true)}
+              >
+                Adicionar Item
+              </button>
+            )}
             <button
               className="btn btn-success"
               onClick={exportToExcel}
@@ -356,7 +358,9 @@ function PainelStock({ username, onLogout }) {
               <th className="text-center fw-bold" onClick={() => sortItems('createdAt')} style={{ cursor: 'pointer' }}>
                 Data de Cadastro {getSortIcon('createdAt')}
               </th>
-              <th className="text-center fw-bold">Ações</th>
+              {localStorage.getItem('isAdmin') === 'true' && (
+                <th className="text-center fw-bold">Ações</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -372,14 +376,16 @@ function PainelStock({ username, onLogout }) {
                   }
                 </td>
                 <td className="align-middle text-center">{item.createdAt}</td>
-                <td className="align-middle text-center">
-                  <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
-                    <FaEdit />
-                  </button>
-                  <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
-                    <MdDelete />
-                  </button>
-                </td>
+                {localStorage.getItem('isAdmin') === 'true' && (
+                  <td className="align-middle text-center">
+                    <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
+                      <FaEdit />
+                    </button>
+                    <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
+                      <MdDelete />
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

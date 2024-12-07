@@ -220,15 +220,15 @@ const RequestItem = ({ username, onLogout }) => {
                         />
                     </div>
                     <div>
-                        <Button variant="success" onClick={exportToExcel} className="me-2">
-                            <BsFileEarmarkSpreadsheet className='mb-1 me-2' />
-                            Relatório
-                        </Button>
                         <Button variant="primary" onClick={() => setShowModal(true)} className="me-2">
                             Solicitar Produto
                         </Button>
-                        <Button variant="secondary" onClick={() => navigate('/stock-panel')}>
+                        <Button variant="secondary" onClick={() => navigate('/stock-panel')} className="me-2">
                             Ver Painel de Estoque
+                        </Button>
+                        <Button variant="success" onClick={exportToExcel} >
+                            <BsFileEarmarkSpreadsheet className='mb-1 me-2'/>
+                            Relatório
                         </Button>
                     </div>
                 </div>
@@ -253,7 +253,9 @@ const RequestItem = ({ username, onLogout }) => {
                                 <th className="text-center fw-bold" onClick={() => sortItems('createdAt')} style={{ cursor: 'pointer' }}>
                                     Data {getSortIcon('createdAt')}
                                 </th>
-                                <th className="text-center fw-bold">Ações</th>
+                                {localStorage.getItem('isAdmin') === 'true' && (
+                                    <th className="text-center fw-bold">Ações</th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -264,14 +266,16 @@ const RequestItem = ({ username, onLogout }) => {
                                     <td className="align-middle text-center">{item.userSector.name}</td>
                                     <td className="align-middle text-center">{item.quantity}</td>
                                     <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
-                                    <td className="align-middle text-center">
-                                        <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
-                                            <FaEdit />
-                                        </button>
-                                        <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
-                                            <MdDelete />
-                                        </button>
-                                    </td>
+                                    {localStorage.getItem('isAdmin') === 'true' && (
+                                        <td className="align-middle text-center">
+                                            <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
+                                                <FaEdit />
+                                            </button>
+                                            <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
+                                                <MdDelete />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
