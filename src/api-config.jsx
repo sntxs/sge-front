@@ -1,1 +1,1 @@
-export const API_URL_GLOBAL = "http://sge-api-main-production.up.railway.app";
+export const API_URL_GLOBAL = "https://sge-api-main-production.up.railway.app";
