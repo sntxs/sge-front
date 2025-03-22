@@ -21,7 +21,8 @@
 }
 
 .submenu-wrapper.open {
-    max-height: 200px; /* Ajuste este valor conforme necessário */
+    max-height: 200px;
+    /* Ajuste este valor conforme necessário */
     transition: max-height 0.3s ease-in;
 }
 
@@ -86,4 +87,12 @@
 /* Ajuste no z-index do menu lateral quando fechado */
 #menu-left {
     z-index: 1050;
+}
+
+@media (max-width: 768px) {
+    #menu-left {
+        bottom: 0;
+        height: 100%;
+        position: fixed;
+    }
 }
