@@ -33,11 +33,13 @@ const RequestItem = ({ username, onLogout }) => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Atualizar o useEffect para buscar itens do estoque
     useEffect(() => {
         const fetchStockItems = async () => {
             try {
+                setIsLoading(true);
                 const response = await axios.get(`${API_URL_GLOBAL}/Product`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -48,14 +50,12 @@ const RequestItem = ({ username, onLogout }) => {
                     nomeProduto: item.name,
                     quantidade: item.quantity,
                 }));
-                setStockItems(formattedItems); // Atualizamos stockItems ao invés de requestedItems
+                setStockItems(formattedItems);
             } catch (error) {
                 console.error('Erro ao buscar itens do estoque:', error);
             }
         };
 
-        fetchStockItems();
-    
         const fetchRequestedItems = async () => {
             try {
                 const response = await axios.get(`${API_URL_GLOBAL}/ProductRequest`, {
@@ -66,9 +66,12 @@ const RequestItem = ({ username, onLogout }) => {
                 setRequestedItems(response.data);
             } catch (error) {
                 console.error('Erro ao buscar solicitações:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
+        fetchStockItems();
         fetchRequestedItems();
     }, []);
 
@@ -97,20 +100,20 @@ const RequestItem = ({ username, onLogout }) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-                setShowSuccessModal(true); // Mostrar modal de sucesso
+                setShowSuccessModal(true);
                 setShowModal(false);
-                
+
                 // Resetar formulário
                 setFormData({
                     productId: '',
-                    userId: localStorage.getItem('userId'),
+                    userId: id,
                     userSectorName: '',
                     quantity: '',
                     dataSolicitacao: new Date().toISOString().split('T')[0]
                 });
-                
-                // Atualizar a lista de solicitações
-                // Você pode adicionar aqui uma chamada para recarregar as solicitações
+
+                // Recarregar a lista de solicitações
+                await reloadRequests();
             }
         } catch (error) {
             console.error('Erro ao enviar solicitação:', error);
@@ -132,20 +135,58 @@ const RequestItem = ({ username, onLogout }) => {
         setShowDeleteModal(true);
     };
 
-    const handleConfirmDelete = () => {
-        const updatedItems = requestedItems.filter(item => item !== itemToDelete);
-        localStorage.setItem('requests', JSON.stringify(updatedItems));
-        setRequestedItems(updatedItems);
-        setShowDeleteModal(false);
+    const handleConfirmDelete = async () => {
+        try {
+            // Fazer a requisição DELETE para a API
+            await axios.delete(`${API_URL_GLOBAL}/ProductRequest/${itemToDelete.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            // Atualizar o estado local após a exclusão
+            const updatedItems = requestedItems.filter(item => item.id !== itemToDelete.id);
+            setRequestedItems(updatedItems);
+            setShowDeleteModal(false);
+
+            // Mostrar feedback ao usuário (opcional)
+            // setShowSuccessMessage("Solicitação excluída com sucesso");
+        } catch (error) {
+            console.error('Erro ao excluir solicitação:', error);
+            // Mostrar mensagem de erro (opcional)
+            // setShowErrorMessage("Erro ao excluir solicitação");
+        }
     };
 
-    const handleSaveEdit = () => {
-        const updatedItems = requestedItems.map(item =>
-            item === itemToEdit ? { ...itemToEdit } : item
-        );
-        localStorage.setItem('requests', JSON.stringify(updatedItems));
-        setRequestedItems(updatedItems);
-        setShowEditModal(false);
+    const handleSaveEdit = async () => {
+        try {
+            // Criar objeto com os dados atualizados
+            const updatedData = {
+                quantity: parseInt(itemToEdit.quantity) // Assumindo que estamos editando a quantidade
+                // Adicione outros campos que podem ser editáveis
+            };
+
+            // Fazer a requisição PUT para a API
+            await axios.put(`${API_URL_GLOBAL}/ProductRequest/${itemToEdit.id}`, updatedData, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            // Atualizar o estado local
+            const updatedItems = requestedItems.map(item =>
+                item.id === itemToEdit.id ? { ...item, ...updatedData } : item
+            );
+            setRequestedItems(updatedItems);
+            setShowEditModal(false);
+
+            // Mostrar feedback ao usuário (opcional)
+            // setShowSuccessMessage("Solicitação atualizada com sucesso");
+        } catch (error) {
+            console.error('Erro ao editar solicitação:', error);
+            // Mostrar mensagem de erro (opcional)
+            // setShowErrorMessage("Erro ao editar solicitação");
+        }
     };
 
     const filteredRequestedItems = requestedItems.filter(item =>
@@ -201,6 +242,23 @@ const RequestItem = ({ username, onLogout }) => {
         window.location.reload(); // Recarregar a página
     };
 
+    // Função para recarregar as solicitações após uma operação
+    const reloadRequests = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`${API_URL_GLOBAL}/ProductRequest`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            setRequestedItems(response.data);
+        } catch (error) {
+            console.error('Erro ao buscar solicitações:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="d-flex">
             <SideMenu username={username} onLogout={onLogout} />
@@ -227,7 +285,7 @@ const RequestItem = ({ username, onLogout }) => {
                             Ver Painel de Estoque
                         </Button>
                         <Button variant="success" onClick={exportToExcel} >
-                            <BsFileEarmarkSpreadsheet className='mb-1 me-2'/>
+                            <BsFileEarmarkSpreadsheet className='mb-1 me-2' />
                             Relatório
                         </Button>
                     </div>
@@ -259,25 +317,42 @@ const RequestItem = ({ username, onLogout }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentItems.map((item, index) => (
-                                <tr key={index}>
-                                    <td className="align-middle text-center">{item.productName}</td>
-                                    <td className="align-middle text-center">{item.userName}</td>
-                                    <td className="align-middle text-center">{item.userSector.name}</td>
-                                    <td className="align-middle text-center">{item.quantity}</td>
-                                    <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
-                                    {localStorage.getItem('isAdmin') === 'true' && (
-                                        <td className="align-middle text-center">
-                                            <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
-                                                <FaEdit />
-                                            </button>
-                                            <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
-                                                <MdDelete />
-                                            </button>
-                                        </td>
-                                    )}
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                                        <div className="spinner-border text-primary" role="status">
+                                            <span className="visually-hidden">Carregando...</span>
+                                        </div>
+                                        <p className="mt-2 mb-0">Carregando solicitações...</p>
+                                    </td>
                                 </tr>
-                            ))}
+                            ) : currentItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                                        <p className="mb-0">Nenhuma solicitação encontrada.</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                currentItems.map((item, index) => (
+                                    <tr key={index}>
+                                        <td className="align-middle text-center">{item.productName}</td>
+                                        <td className="align-middle text-center">{item.userName}</td>
+                                        <td className="align-middle text-center">{item.userSector.name}</td>
+                                        <td className="align-middle text-center">{item.quantity}</td>
+                                        <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
+                                        {localStorage.getItem('isAdmin') === 'true' && (
+                                            <td className="align-middle text-center">
+                                                <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
+                                                    <FaEdit />
+                                                </button>
+                                                <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
+                                                    <MdDelete />
+                                                </button>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -400,11 +475,13 @@ const RequestItem = ({ username, onLogout }) => {
                                     <input
                                         type="number"
                                         className="form-control"
-                                        value={itemToEdit.quantidadeSolicitada}
+                                        value={itemToEdit.quantity}
                                         onChange={(e) => setItemToEdit({
                                             ...itemToEdit,
-                                            quantidadeSolicitada: e.target.value
+                                            quantity: e.target.value
                                         })}
+                                        min="1"
+                                        max={stockItems.find(item => item.id === itemToEdit.productId)?.quantidade || 999}
                                     />
                                 </div>
                             </form>

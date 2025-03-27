@@ -39,6 +39,7 @@ function PainelStock({ username, onLogout }) {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackError, setFeedbackError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,6 +77,7 @@ function PainelStock({ username, onLogout }) {
   useEffect(() => {
     const fetchItems = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(`${API_URL_GLOBAL}/Product`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -92,6 +94,8 @@ function PainelStock({ username, onLogout }) {
         setItems(formattedItems);
       } catch (error) {
         console.error('Erro ao buscar itens do estoque:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -364,30 +368,47 @@ function PainelStock({ username, onLogout }) {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((item, index) => (
-              <tr key={index}>
-                <td className="align-middle text-center">{item.name}</td>
-                <td className="align-middle text-center">{item.description}</td>
-                <td className="align-middle text-center">{item.userName}</td>
-                <td className={`align-middle text-center ${getQuantityColorClass(item.quantity)}`}>
-                  {item.quantity}
-                  {item.quantity < 3 &&
-                    <div className="small text-danger">Estoque baixo!</div>
-                  }
+            {isLoading ? (
+              <tr>
+                <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Carregando...</span>
+                  </div>
+                  <p className="mt-2 mb-0">Carregando itens do estoque...</p>
                 </td>
-                <td className="align-middle text-center">{item.createdAt}</td>
-                {localStorage.getItem('isAdmin') === 'true' && (
-                  <td className="align-middle text-center">
-                    <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
-                      <FaEdit />
-                    </button>
-                    <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
-                      <MdDelete />
-                    </button>
-                  </td>
-                )}
               </tr>
-            ))}
+            ) : currentItems.length === 0 ? (
+              <tr>
+                <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                  <p className="mb-0">Nenhum item encontrado no estoque.</p>
+                </td>
+              </tr>
+            ) : (
+              currentItems.map((item, index) => (
+                <tr key={index}>
+                  <td className="align-middle text-center">{item.name}</td>
+                  <td className="align-middle text-center">{item.description}</td>
+                  <td className="align-middle text-center">{item.userName}</td>
+                  <td className={`align-middle text-center ${getQuantityColorClass(item.quantity)}`}>
+                    {item.quantity}
+                    {item.quantity < 3 &&
+                      <div className="small text-danger">Estoque baixo!</div>
+                    }
+                  </td>
+                  <td className="align-middle text-center">{item.createdAt}</td>
+                  {localStorage.getItem('isAdmin') === 'true' && (
+                    <td className="align-middle text-center">
+                      <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
+                        <FaEdit />
+                      </button>
+                      <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
+                        <MdDelete />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 

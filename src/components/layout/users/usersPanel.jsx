@@ -31,6 +31,7 @@ function UsersPanel({ username, onLogout }) {
   const [showPasswordAlert, setShowPasswordAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [sectors, setSectors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const togglePasswordVisibility = () => {
     setFormData(prevState => ({
@@ -113,6 +114,7 @@ function UsersPanel({ username, onLogout }) {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(`${API_URL_GLOBAL}/User/`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -121,6 +123,8 @@ function UsersPanel({ username, onLogout }) {
         setUsers(response.data);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -579,25 +583,42 @@ function UsersPanel({ username, onLogout }) {
             </tr>
           </thead>
           <tbody>
-            {currentUsers.map(user => (
-              <tr key={user.id}>
-                <td className="align-middle text-center">{user.name}</td>
-                <td className="align-middle text-center">{user.email}</td>
-                <td className="align-middle text-center">{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
-                <td className="align-middle text-center">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
-                <td className="align-middle text-center">{user.username}</td>
-                <td className="align-middle text-center">{user.sector.name}</td>
-                <td className="align-middle text-center">{user.isAdmin ? 'Sim' : 'Não'}</td>
-                <td className="align-middle text-center">
-                  <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(user)}>
-                    <FaEdit />
-                  </button>
-                  <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(user)}>
-                    <MdDelete />
-                  </button>
+            {isLoading ? (
+              <tr>
+                <td colSpan={8} className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Carregando...</span>
+                  </div>
+                  <p className="mt-2 mb-0">Carregando usuários...</p>
                 </td>
               </tr>
-            ))}
+            ) : currentUsers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="text-center py-4">
+                  <p className="mb-0">Nenhum usuário encontrado.</p>
+                </td>
+              </tr>
+            ) : (
+              currentUsers.map(user => (
+                <tr key={user.id}>
+                  <td className="align-middle text-center">{user.name}</td>
+                  <td className="align-middle text-center">{user.email}</td>
+                  <td className="align-middle text-center">{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
+                  <td className="align-middle text-center">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
+                  <td className="align-middle text-center">{user.username}</td>
+                  <td className="align-middle text-center">{user.sector.name}</td>
+                  <td className="align-middle text-center">{user.isAdmin ? 'Sim' : 'Não'}</td>
+                  <td className="align-middle text-center">
+                    <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(user)}>
+                      <FaEdit />
+                    </button>
+                    <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(user)}>
+                      <MdDelete />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 

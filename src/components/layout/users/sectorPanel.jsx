@@ -24,23 +24,27 @@ function SectorPanel({ username, onLogout }) {
   const [showAlert, setShowAlert] = useState(false);
   const [showEditAlert, setShowEditAlert] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const fetchSectors = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`${API_URL_GLOBAL}/Sector`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setSectors(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar setores:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchSectors();
   }, []);
-
-  const fetchSectors = async () => {
-    try {
-      const response = await axios.get(`${API_URL_GLOBAL}/Sector`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setSectors(response.data);
-    } catch (error) {
-      console.error('Erro ao buscar setores:', error);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -209,20 +213,37 @@ function SectorPanel({ username, onLogout }) {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((sector) => (
-              <tr key={sector.id}>
-                <td className="text-center">{sector.name}</td>
-                <td className="text-center">{new Date(sector.createdAt).toLocaleDateString('pt-BR')}</td>
-                <td className="text-center">
-                  <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(sector)}>
-                    <FaEdit />
-                  </button>
-                  <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(sector)}>
-                    <MdDelete />
-                  </button>
+            {isLoading ? (
+              <tr>
+                <td colSpan={3} className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Carregando...</span>
+                  </div>
+                  <p className="mt-2 mb-0">Carregando setores...</p>
                 </td>
               </tr>
-            ))}
+            ) : currentItems.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center py-4">
+                  <p className="mb-0">Nenhum setor encontrado.</p>
+                </td>
+              </tr>
+            ) : (
+              currentItems.map((sector) => (
+                <tr key={sector.id}>
+                  <td className="text-center">{sector.name}</td>
+                  <td className="text-center">{new Date(sector.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td className="text-center">
+                    <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(sector)}>
+                      <FaEdit />
+                    </button>
+                    <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(sector)}>
+                      <MdDelete />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 
