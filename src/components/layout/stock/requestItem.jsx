@@ -34,6 +34,7 @@ const RequestItem = ({ username, onLogout }) => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("Erro ao enviar solicitação. Por favor, tente novamente.");
 
     // Atualizar o useEffect para buscar itens do estoque
     useEffect(() => {
@@ -117,6 +118,17 @@ const RequestItem = ({ username, onLogout }) => {
             }
         } catch (error) {
             console.error('Erro ao enviar solicitação:', error);
+            // Capturar mensagem de erro do backend
+            if (error.response && error.response.data) {
+                // Verifica se é o erro específico de quantidade
+                if (typeof error.response.data === 'string' && error.response.data.includes('quantidade')) {
+                    setErrorMessage(error.response.data);
+                } else if (error.response.data.message) {
+                    setErrorMessage(error.response.data.message);
+                } else if (typeof error.response.data === 'string') {
+                    setErrorMessage(error.response.data);
+                }
+            }
             setShowErrorModal(true); // Mostrar modal de erro
         }
     };
@@ -184,8 +196,24 @@ const RequestItem = ({ username, onLogout }) => {
             // setShowSuccessMessage("Solicitação atualizada com sucesso");
         } catch (error) {
             console.error('Erro ao editar solicitação:', error);
-            // Mostrar mensagem de erro (opcional)
-            // setShowErrorMessage("Erro ao editar solicitação");
+            // Capturar mensagem de erro do backend
+            if (error.response && error.response.data) {
+                // Verifica se é o erro específico de quantidade
+                if (typeof error.response.data === 'string' && error.response.data.includes('quantidade')) {
+                    setErrorMessage(error.response.data);
+                } else if (error.response.data.message) {
+                    setErrorMessage(error.response.data.message);
+                } else if (typeof error.response.data === 'string') {
+                    setErrorMessage(error.response.data);
+                } else {
+                    setErrorMessage("Erro ao editar solicitação. Por favor, tente novamente.");
+                }
+            } else {
+                setErrorMessage("Erro ao editar solicitação. Por favor, tente novamente.");
+            }
+
+            setShowEditModal(false); // Fechar modal de edição
+            setShowErrorModal(true); // Mostrar modal de erro
         }
     };
 
@@ -420,7 +448,7 @@ const RequestItem = ({ username, onLogout }) => {
                     <Modal.Body>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
-                                <label htmlFor="productId" className="form-label">Produto</label>
+                                <label htmlFor="productId" className="form-label">Produto:</label>
                                 <select
                                     className="form-control"
                                     id="productId"
@@ -439,9 +467,7 @@ const RequestItem = ({ username, onLogout }) => {
                             </div>
                             <div className="mb-3">
                                 <label htmlFor="quantity" className="form-label">
-                                    Quantidade (Máximo: {
-                                        stockItems.find(item => item.id === parseInt(formData.productId))?.quantidade || 0
-                                    })
+                                    Quantidade:
                                 </label>
                                 <input
                                     type="number"
@@ -536,7 +562,7 @@ const RequestItem = ({ username, onLogout }) => {
                         <Modal.Title>Erro</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="bg-danger text-white">
-                        Erro ao enviar solicitação. Por favor, tente novamente.
+                        {errorMessage}
                     </Modal.Body>
                     <Modal.Footer className="bg-danger">
                         <Button variant="light" onClick={handleCloseModal}>
