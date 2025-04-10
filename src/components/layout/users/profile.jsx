@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Modal, Button, Form } from 'react-bootstrap';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUser, FaIdCard, FaEnvelope, FaPhone, FaBuilding, FaUserCog, FaLock } from 'react-icons/fa';
 import SideMenu from '../side-menu';
 import { API_URL_GLOBAL } from '../../../api-config';
 import '../../css/profile.css';
+import PropTypes from 'prop-types';
 
 function Profile({ username, onLogout }) {
     const [userData, setUserData] = useState(null);
@@ -18,12 +19,13 @@ function Profile({ username, onLogout }) {
         showConfirmPassword: false
     });
     const [showAlertModal, setShowAlertModal] = useState(false);
-    const [alertInfo, setAlertInfo] = useState({ 
+    const [alertInfo, setAlertInfo] = useState({
         title: '',
-        message: '', 
+        message: '',
         type: '',
-        icon: null 
+        icon: null
     });
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchUserData();
@@ -31,6 +33,7 @@ function Profile({ username, onLogout }) {
 
     const fetchUserData = async () => {
         try {
+            setIsLoading(true);
             const userId = localStorage.getItem('id');
             const response = await axios.get(`${API_URL_GLOBAL}/User/${userId}`, {
                 headers: {
@@ -41,6 +44,8 @@ function Profile({ username, onLogout }) {
         } catch (error) {
             console.error('Erro ao buscar dados do usuário:', error);
             showError('Erro ao carregar dados do usuário');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -134,206 +139,243 @@ function Profile({ username, onLogout }) {
     };
 
     return (
-        <div className="d-flex">
+        <div className="profile-page">
             <SideMenu username={username} onLogout={onLogout} />
-            <div className="flex-grow-1 p-4">
-                <div className="container">
-                    <h1 className="text-center mb-4">Meu Perfil</h1>
+            <div className="profile-content-wrapper">
+                {/* Hero Banner */}
+                <div className="profile-hero-banner">
+                    <div className="user-avatar">
+                        {userData?.name ? userData.name.charAt(0).toUpperCase() : <FaUser />}
+                    </div>
+                    <h1>Meu Perfil</h1>
+                    <p>Gerencie suas informações pessoais e preferências</p>
+                </div>
 
-                    {userData && (
-                        <div className="profile-container">
-                            <div className="row">
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>Nome</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={userData.name}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>Email</label>
-                                        <input
-                                            type="email"
-                                            className="form-control"
-                                            value={userData.email}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>Telefone</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={formatPhoneNumber(userData.phoneNumber)}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>CPF</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={formatCPF(userData.cpf)}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>Setor</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={userData.sector?.name}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-4">
-                                    <div className="info-group">
-                                        <label>Tipo de Usuário</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={userData.isAdmin ? 'Administrador' : 'Usuário Comum'}
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
+                {isLoading ? (
+                    <div className="loading-glass-card">
+                        <div className="pulse-loader">
+                            <div className="pulse-circle"></div>
+                            <div className="pulse-circle"></div>
+                            <div className="pulse-circle"></div>
+                        </div>
+                        <p>Carregando suas informações...</p>
+                    </div>
+                ) : userData && (
+                    <div className="profile-cards-container">
+                        {/* Personal Info Card */}
+                        <div className="glass-card">
+                            <div className="card-header">
+                                <h2>Informações Pessoais</h2>
                             </div>
+                            <div className="card-content">
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaUser />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>Nome</label>
+                                        <div className="info-value">{userData.name}</div>
+                                    </div>
+                                </div>
 
-                            <div className="text-center mt-4">
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    onClick={() => setShowPasswordModal(true)}
-                                >
-                                    Alterar Senha
-                                </Button>
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaEnvelope />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>Email</label>
+                                        <div className="info-value">{userData.email}</div>
+                                    </div>
+                                </div>
+
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaPhone />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>Telefone</label>
+                                        <div className="info-value">{formatPhoneNumber(userData.phoneNumber)}</div>
+                                    </div>
+                                </div>
+
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaIdCard />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>CPF</label>
+                                        <div className="info-value">{formatCPF(userData.cpf)}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Modal de Alteração de Senha */}
-                    <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
-                        <Modal.Header closeButton>
-                            <Modal.Title>Alterar Senha</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Form onSubmit={handlePasswordChange}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Senha Atual</Form.Label>
-                                    <div className="input-group">
-                                        <Form.Control
-                                            type={passwordData.showCurrentPassword ? "text" : "password"}
-                                            value={passwordData.currentPassword}
-                                            onChange={(e) => setPasswordData({
-                                                ...passwordData,
-                                                currentPassword: e.target.value
-                                            })}
-                                            required
-                                        />
-                                        <Button
-                                            variant="outline-secondary"
-                                            onClick={() => togglePasswordVisibility('showCurrentPassword')}
-                                        >
-                                            {passwordData.showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </Button>
-                                    </div>
-                                </Form.Group>
-
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Nova Senha</Form.Label>
-                                    <div className="input-group">
-                                        <Form.Control
-                                            type={passwordData.showNewPassword ? "text" : "password"}
-                                            value={passwordData.newPassword}
-                                            onChange={(e) => setPasswordData({
-                                                ...passwordData,
-                                                newPassword: e.target.value
-                                            })}
-                                            required
-                                        />
-                                        <Button
-                                            variant="outline-secondary"
-                                            onClick={() => togglePasswordVisibility('showNewPassword')}
-                                        >
-                                            {passwordData.showNewPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </Button>
-                                    </div>
-                                </Form.Group>
-
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Confirmar Nova Senha</Form.Label>
-                                    <div className="input-group">
-                                        <Form.Control
-                                            type={passwordData.showConfirmPassword ? "text" : "password"}
-                                            value={passwordData.confirmPassword}
-                                            onChange={(e) => setPasswordData({
-                                                ...passwordData,
-                                                confirmPassword: e.target.value
-                                            })}
-                                            required
-                                        />
-                                        <Button
-                                            variant="outline-secondary"
-                                            onClick={() => togglePasswordVisibility('showConfirmPassword')}
-                                        >
-                                            {passwordData.showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </Button>
-                                        <Form.Text className="text-muted">
-                                            - A senha deve ter entre 6 e 12 caracteres e conter pelo menos um dígito.
-                                        </Form.Text>
-                                    </div>
-                                </Form.Group>
-
-                                <div className="d-flex justify-content-end">
-                                    <Button variant="secondary" className="me-2" onClick={() => setShowPasswordModal(false)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button variant="primary" type="submit">
-                                        Salvar
-                                    </Button>
-                                </div>
-                            </Form>
-                        </Modal.Body>
-                    </Modal>
-
-                    {/* Modal de Alerta Personalizado */}
-                    <Modal show={showAlertModal} onHide={() => setShowAlertModal(false)} centered>
-                        <Modal.Header closeButton className={`bg-${alertInfo.type} text-white`}>
-                            <Modal.Title className="d-flex align-items-center">
-                                <span className="me-2">{alertInfo.icon}</span>
-                                {alertInfo.title}
-                            </Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <div className={`text-${alertInfo.type} fw-bold`}>
-                                {alertInfo.message}
+                        {/* System Info Card */}
+                        <div className="glass-card">
+                            <div className="card-header">
+                                <h2>Informações do Sistema</h2>
                             </div>
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button 
-                                variant={alertInfo.type} 
-                                onClick={() => setShowAlertModal(false)}
-                            >
-                                Fechar
-                            </Button>
-                        </Modal.Footer>
-                    </Modal>
-                </div>
+                            <div className="card-content">
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaBuilding />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>Setor</label>
+                                        <div className="info-value">{userData.sector?.name}</div>
+                                    </div>
+                                </div>
+
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <FaUserCog />
+                                    </div>
+                                    <div className="info-details">
+                                        <label>Tipo de Usuário</label>
+                                        <div className="info-value">{userData.isAdmin ? 'Administrador' : 'Usuário Comum'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="action-container">
+                                    <button
+                                        className="action-button"
+                                        onClick={() => setShowPasswordModal(true)}
+                                    >
+                                        <FaLock />
+                                        <span>Alterar Senha</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal de Alteração de Senha */}
+                <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered className="modern-modal">
+                    <Modal.Header closeButton>
+                        <div className="modal-title-with-icon">
+                            <FaLock />
+                            <Modal.Title>Alterar Senha</Modal.Title>
+                        </div>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form onSubmit={handlePasswordChange}>
+                            <Form.Group className="mb-4">
+                                <Form.Label>Senha Atual</Form.Label>
+                                <div className="password-input-group">
+                                    <Form.Control
+                                        type={passwordData.showCurrentPassword ? "text" : "password"}
+                                        value={passwordData.currentPassword}
+                                        onChange={(e) => setPasswordData({
+                                            ...passwordData,
+                                            currentPassword: e.target.value
+                                        })}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => togglePasswordVisibility('showCurrentPassword')}
+                                    >
+                                        {passwordData.showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+                                </div>
+                            </Form.Group>
+
+                            <Form.Group className="mb-4">
+                                <Form.Label>Nova Senha</Form.Label>
+                                <div className="password-input-group">
+                                    <Form.Control
+                                        type={passwordData.showNewPassword ? "text" : "password"}
+                                        value={passwordData.newPassword}
+                                        onChange={(e) => setPasswordData({
+                                            ...passwordData,
+                                            newPassword: e.target.value
+                                        })}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => togglePasswordVisibility('showNewPassword')}
+                                    >
+                                        {passwordData.showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+                                </div>
+                            </Form.Group>
+
+                            <Form.Group className="mb-4">
+                                <Form.Label>Confirmar Nova Senha</Form.Label>
+                                <div className="password-input-group">
+                                    <Form.Control
+                                        type={passwordData.showConfirmPassword ? "text" : "password"}
+                                        value={passwordData.confirmPassword}
+                                        onChange={(e) => setPasswordData({
+                                            ...passwordData,
+                                            confirmPassword: e.target.value
+                                        })}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => togglePasswordVisibility('showConfirmPassword')}
+                                    >
+                                        {passwordData.showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+                                </div>
+                            </Form.Group>
+
+                            <div className="password-requirements">
+                                <h5>Requisitos de Senha:</h5>
+                                <div className="requirements-list">
+                                    <div className={`requirement ${passwordData.newPassword.length >= 6 && passwordData.newPassword.length <= 12 ? 'fulfilled' : ''}`}>
+                                        Entre 6 e 12 caracteres
+                                    </div>
+                                    <div className={`requirement ${/\d/.test(passwordData.newPassword) ? 'fulfilled' : ''}`}>
+                                        Pelo menos um dígito
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-actions">
+                                <Button variant="outline-secondary" onClick={() => setShowPasswordModal(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button variant="primary" type="submit">
+                                    Salvar
+                                </Button>
+                            </div>
+                        </Form>
+                    </Modal.Body>
+                </Modal>
+
+                {/* Modal de Alerta Personalizado */}
+                <Modal show={showAlertModal} onHide={() => setShowAlertModal(false)} centered className="modern-modal alert-modal">
+                    <Modal.Body className="text-center py-4">
+                        <div className={`alert-icon ${alertInfo.type === 'danger' ? 'error-icon' : 'success-icon'}`}>
+                            {alertInfo.type === 'danger' ? '!' : '✓'}
+                        </div>
+                        <h4 className="mt-4 mb-3">{alertInfo.title}</h4>
+                        <p className="alert-message">
+                            {alertInfo.message}
+                        </p>
+                        <Button
+                            className={`close-alert-btn ${alertInfo.type === 'danger' ? 'error-btn' : 'success-btn'}`}
+                            onClick={() => setShowAlertModal(false)}
+                        >
+                            Fechar
+                        </Button>
+                    </Modal.Body>
+                </Modal>
             </div>
         </div>
     );
 }
+
+Profile.propTypes = {
+    username: PropTypes.string.isRequired,
+    onLogout: PropTypes.func.isRequired
+};
 
 export default Profile; 

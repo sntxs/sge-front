@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import axios from 'axios';
 import SideMenu from '../side-menu';
 import '../../css/requestItem.css';
-import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch, FaBoxOpen } from 'react-icons/fa';
 import { BsFileEarmarkSpreadsheet } from 'react-icons/bs';
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdInventory } from 'react-icons/md';
 import * as XLSX from 'xlsx';
 import { API_URL_GLOBAL } from '../../../api-config';
 
@@ -35,6 +35,9 @@ const RequestItem = ({ username, onLogout }) => {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("Erro ao enviar solicitação. Por favor, tente novamente.");
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedbackError, setFeedbackError] = useState(false);
 
     // Atualizar o useEffect para buscar itens do estoque
     useEffect(() => {
@@ -160,13 +163,17 @@ const RequestItem = ({ username, onLogout }) => {
             const updatedItems = requestedItems.filter(item => item.id !== itemToDelete.id);
             setRequestedItems(updatedItems);
             setShowDeleteModal(false);
-
-            // Mostrar feedback ao usuário (opcional)
-            // setShowSuccessMessage("Solicitação excluída com sucesso");
+            
+            // Mostrar feedback ao usuário
+            setFeedbackMessage("Solicitação excluída com sucesso!");
+            setFeedbackError(false);
+            setShowFeedbackModal(true);
         } catch (error) {
             console.error('Erro ao excluir solicitação:', error);
-            // Mostrar mensagem de erro (opcional)
-            // setShowErrorMessage("Erro ao excluir solicitação");
+            // Mostrar mensagem de erro
+            setFeedbackMessage("Erro ao excluir solicitação. Por favor, tente novamente.");
+            setFeedbackError(true);
+            setShowFeedbackModal(true);
         }
     };
 
@@ -191,9 +198,11 @@ const RequestItem = ({ username, onLogout }) => {
             );
             setRequestedItems(updatedItems);
             setShowEditModal(false);
-
-            // Mostrar feedback ao usuário (opcional)
-            // setShowSuccessMessage("Solicitação atualizada com sucesso");
+            
+            // Mostrar feedback ao usuário
+            setFeedbackMessage("Solicitação atualizada com sucesso!");
+            setFeedbackError(false);
+            setShowFeedbackModal(true);
         } catch (error) {
             console.error('Erro ao editar solicitação:', error);
             // Capturar mensagem de erro do backend
@@ -269,6 +278,13 @@ const RequestItem = ({ username, onLogout }) => {
     const handleCloseModal = () => {
         window.location.reload(); // Recarregar a página
     };
+    
+    const handleCloseFeedback = () => {
+        setShowFeedbackModal(false);
+        if (!feedbackError) {
+            window.location.reload();
+        }
+    };
 
     // Função para recarregar as solicitações após uma operação
     const reloadRequests = async () => {
@@ -288,59 +304,94 @@ const RequestItem = ({ username, onLogout }) => {
     };
 
     return (
-        <div className="d-flex">
+        <div className="request-container">
             <SideMenu username={username} onLogout={onLogout} />
-            <div className="flex-grow-1 p-4">
-                <h1 className="text-center">Solicitar Item</h1>
-
-                {/* Barra de pesquisa e botões */}
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div className="search-container position-relative">
-                        <FaSearch className="search-icon" />
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="Buscar solicitação..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <Button variant="primary" onClick={() => setShowModal(true)} className="me-2">
-                            Solicitar Produto
-                        </Button>
-                        <Button variant="secondary" onClick={() => navigate('/stock-panel')} className="me-2">
-                            Ver Painel de Estoque
-                        </Button>
-                        <Button variant="success" onClick={exportToExcel} >
-                            <BsFileEarmarkSpreadsheet className='mb-1 me-2' />
-                            Relatório
-                        </Button>
+            <div className="request-content">
+                <div className="header-card">
+                    <div className="header-content">
+                        <div className="header-icon">
+                            <MdInventory size={40} />
+                        </div>
+                        <div>
+                            <h1 className="text-center mb-0">Solicitar Item</h1>
+                            <p className="text-center mb-0">Solicite produtos do estoque de forma simples</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Tabela de Solicitações */}
-                <div className="table-responsive">
-                    <table className="table table-striped">
+                <div className="control-panel">
+                    <div className="search-container">
+                        <div className="search-wrapper">
+                            <FaSearch className="search-icon" />
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="Buscar solicitação..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="action-buttons">
+                        <button
+                            className="btn btn-request"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <FaBoxOpen className='me-2' />
+                            Solicitar Produto
+                        </button>
+                        <button
+                            className="btn btn-outline-primary"
+                            onClick={() => navigate('/stock-panel')}
+                        >
+                            Painel de Estoque
+                        </button>
+                        <button
+                            className="btn btn-rel"
+                            onClick={exportToExcel}
+                        >
+                            <BsFileEarmarkSpreadsheet className='me-2' />
+                            Relatório
+                        </button>
+                    </div>
+                </div>
+
+                <div className="table-container">
+                    <table className="request-table">
                         <thead>
-                            <tr className="text-uppercase">
-                                <th className="text-center fw-bold" onClick={() => sortItems('productName')} style={{ cursor: 'pointer' }}>
-                                    Produto {getSortIcon('productName')}
+                            <tr>
+                                <th onClick={() => sortItems('productName')}>
+                                    <div className="th-content">
+                                        Produto
+                                        <span className="sort-icon">{getSortIcon('productName')}</span>
+                                    </div>
                                 </th>
-                                <th className="text-center fw-bold" onClick={() => sortItems('userName')} style={{ cursor: 'pointer' }}>
-                                    Solicitante {getSortIcon('userName')}
+                                <th onClick={() => sortItems('userName')}>
+                                    <div className="th-content">
+                                        Solicitante
+                                        <span className="sort-icon">{getSortIcon('userName')}</span>
+                                    </div>
                                 </th>
-                                <th className="text-center fw-bold" onClick={() => sortItems('userSector.name')} style={{ cursor: 'pointer' }}>
-                                    Setor {getSortIcon('userSector.name')}
+                                <th onClick={() => sortItems('userSector.name')}>
+                                    <div className="th-content">
+                                        Setor
+                                        <span className="sort-icon">{getSortIcon('userSector.name')}</span>
+                                    </div>
                                 </th>
-                                <th className="text-center fw-bold" onClick={() => sortItems('quantity')} style={{ cursor: 'pointer' }}>
-                                    Quantidade {getSortIcon('quantity')}
+                                <th onClick={() => sortItems('quantity')}>
+                                    <div className="th-content">
+                                        Quantidade
+                                        <span className="sort-icon">{getSortIcon('quantity')}</span>
+                                    </div>
                                 </th>
-                                <th className="text-center fw-bold" onClick={() => sortItems('createdAt')} style={{ cursor: 'pointer' }}>
-                                    Data {getSortIcon('createdAt')}
+                                <th onClick={() => sortItems('createdAt')}>
+                                    <div className="th-content">
+                                        Data
+                                        <span className="sort-icon">{getSortIcon('createdAt')}</span>
+                                    </div>
                                 </th>
                                 {localStorage.getItem('isAdmin') === 'true' && (
-                                    <th className="text-center fw-bold">Ações</th>
+                                    <th className="text-center">Ações</th>
                                 )}
                             </tr>
                         </thead>
@@ -348,8 +399,10 @@ const RequestItem = ({ username, onLogout }) => {
                             {isLoading ? (
                                 <tr>
                                     <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
-                                        <div className="spinner-border text-primary" role="status">
-                                            <span className="visually-hidden">Carregando...</span>
+                                        <div className="spinner">
+                                            <div className="bounce1"></div>
+                                            <div className="bounce2"></div>
+                                            <div className="bounce3"></div>
                                         </div>
                                         <p className="mt-2 mb-0">Carregando solicitações...</p>
                                     </td>
@@ -357,23 +410,26 @@ const RequestItem = ({ username, onLogout }) => {
                             ) : currentItems.length === 0 ? (
                                 <tr>
                                     <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
-                                        <p className="mb-0">Nenhuma solicitação encontrada.</p>
+                                        <div className="empty-state">
+                                            <MdInventory size={48} className="empty-icon" />
+                                            <p className="mb-0">Nenhuma solicitação encontrada.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
                                 currentItems.map((item, index) => (
-                                    <tr key={index}>
-                                        <td className="align-middle text-center">{item.productName}</td>
-                                        <td className="align-middle text-center">{item.userName}</td>
-                                        <td className="align-middle text-center">{item.userSector.name}</td>
-                                        <td className="align-middle text-center">{item.quantity}</td>
-                                        <td className="align-middle text-center">{formatDate(item.createdAt)}</td>
+                                    <tr key={index} className="request-row">
+                                        <td>{item.productName}</td>
+                                        <td>{item.userName}</td>
+                                        <td>{item.userSector.name}</td>
+                                        <td>{item.quantity}</td>
+                                        <td>{formatDate(item.createdAt)}</td>
                                         {localStorage.getItem('isAdmin') === 'true' && (
-                                            <td className="align-middle text-center">
-                                                <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(item)}>
+                                            <td className="action-cell">
+                                                <button className="action-btn edit-btn" onClick={() => handleEdit(item)}>
                                                     <FaEdit />
                                                 </button>
-                                                <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(item)}>
+                                                <button className="action-btn delete-btn" onClick={() => handleDelete(item)}>
                                                     <MdDelete />
                                                 </button>
                                             </td>
@@ -385,72 +441,86 @@ const RequestItem = ({ username, onLogout }) => {
                     </table>
                 </div>
 
-                {/* Paginação */}
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredRequestedItems.length)} de {filteredRequestedItems.length} solicitações
+                <div className="pagination-container">
+                    <div className="showing-info">
+                        {filteredRequestedItems.length > 0 ? (
+                            <>Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredRequestedItems.length)} de {filteredRequestedItems.length} solicitações</>
+                        ) : (
+                            <span>Nenhuma solicitação encontrada</span>
+                        )}
                     </div>
-                    <nav>
-                        <ul className="pagination">
-                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                <button
-                                    className="page-link"
-                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Anterior
-                                </button>
-                            </li>
+                    {filteredRequestedItems.length > 0 && (
+                        <nav>
+                            <ul className="custom-pagination">
+                                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                    <button
+                                        className="page-link"
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Anterior
+                                    </button>
+                                </li>
 
-                            {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                .filter(num => {
-                                    if (totalPages <= 7) return true;
-                                    if (num === 1 || num === totalPages) return true;
-                                    if (num >= currentPage - 1 && num <= currentPage + 1) return true;
-                                    return false;
-                                })
-                                .map((number) => (
-                                    <React.Fragment key={number}>
-                                        {number > 1 && number - 1 !== 1 &&
-                                            <li className="page-item disabled">
-                                                <span className="page-link">...</span>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(num => {
+                                        if (totalPages <= 7) return true;
+                                        if (num === 1 || num === totalPages) return true;
+                                        if (num >= currentPage - 1 && num <= currentPage + 1) return true;
+                                        return false;
+                                    })
+                                    .map((number) => (
+                                        <React.Fragment key={number}>
+                                            {number > 1 && number - 1 !== 1 &&
+                                                <li className="page-item disabled">
+                                                    <span className="page-link">...</span>
+                                                </li>
+                                            }
+                                            <li className={`page-item ${currentPage === number ? 'active' : ''}`}>
+                                                <button
+                                                    className="page-link"
+                                                    onClick={() => setCurrentPage(number)}
+                                                >
+                                                    {number}
+                                                </button>
                                             </li>
-                                        }
-                                        <li className={`page-item ${currentPage === number ? 'active' : ''}`}>
-                                            <button
-                                                className="page-link"
-                                                onClick={() => setCurrentPage(number)}
-                                            >
-                                                {number}
-                                            </button>
-                                        </li>
-                                    </React.Fragment>
-                                ))}
+                                        </React.Fragment>
+                                    ))}
 
-                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                <button
-                                    className="page-link"
-                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Próximo
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
+                                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                    <button
+                                        className="page-link"
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Próximo
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    )}
                 </div>
 
                 {/* Modal de Solicitação */}
-                <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Solicitar Produto</Modal.Title>
+                <Modal
+                    show={showModal}
+                    onHide={() => setShowModal(false)}
+                    dialogClassName="custom-modal"
+                    aria-labelledby="example-custom-modal-styling-title"
+                    centered
+                >
+                    <Modal.Header closeButton className="modal-custom-header">
+                        <Modal.Title id="example-custom-modal-styling-title">
+                            <FaBoxOpen className="me-2" />
+                            Solicitar Produto
+                        </Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
+                    <Modal.Body className="modal-custom-body">
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label htmlFor="productId" className="form-label">Produto:</label>
                                 <select
-                                    className="form-control"
+                                    className="custom-input"
                                     id="productId"
                                     name="productId"
                                     value={formData.productId}
@@ -471,7 +541,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 </label>
                                 <input
                                     type="number"
-                                    className="form-control"
+                                    className="custom-input"
                                     id="quantity"
                                     name="quantity"
                                     value={formData.quantity}
@@ -481,7 +551,7 @@ const RequestItem = ({ username, onLogout }) => {
                                     required
                                 />
                             </div>
-                            <Button variant="primary" type="submit">
+                            <Button variant="primary" type="submit" className="custom-button">
                                 Enviar Solicitação
                             </Button>
                         </form>
@@ -489,18 +559,26 @@ const RequestItem = ({ username, onLogout }) => {
                 </Modal>
 
                 {/* Modal de Edição */}
-                <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Editar Solicitação</Modal.Title>
+                <Modal
+                    show={showEditModal}
+                    onHide={() => setShowEditModal(false)}
+                    centered
+                    dialogClassName="custom-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header">
+                        <Modal.Title>
+                            <FaEdit className="me-2" />
+                            Editar Solicitação
+                        </Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
+                    <Modal.Body className="modal-custom-body">
                         {itemToEdit && (
                             <form>
                                 <div className="mb-3">
                                     <label className="form-label">Quantidade</label>
                                     <input
                                         type="number"
-                                        className="form-control"
+                                        className="custom-input"
                                         value={itemToEdit.quantity}
                                         onChange={(e) => setItemToEdit({
                                             ...itemToEdit,
@@ -513,59 +591,124 @@ const RequestItem = ({ username, onLogout }) => {
                             </form>
                         )}
                     </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="secondary" onClick={() => setShowEditModal(false)} className="custom-button cancel-button">
                             Cancelar
                         </Button>
-                        <Button variant="primary" onClick={handleSaveEdit}>
+                        <Button variant="primary" onClick={handleSaveEdit} className="custom-button">
                             Salvar
                         </Button>
                     </Modal.Footer>
                 </Modal>
 
                 {/* Modal de Confirmação de Deleção */}
-                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Confirmar Exclusão</Modal.Title>
+                <Modal
+                    show={showDeleteModal}
+                    onHide={() => setShowDeleteModal(false)}
+                    centered
+                    className="delete-confirmation-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header">
+                        <Modal.Title>
+                            <MdDelete className="me-2" />
+                            Confirmar Exclusão
+                        </Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
-                        Tem certeza que deseja excluir esta solicitação?
+                    <Modal.Body className="modal-custom-body">
+                        <div className="text-center mb-3">
+                            <div className="delete-icon-container">
+                                <MdDelete size={40} />
+                            </div>
+                        </div>
+                        <p className="text-center">
+                            Tem certeza que deseja excluir esta solicitação?<br />
+                            <strong>Esta ação não pode ser desfeita.</strong>
+                        </p>
                     </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="custom-button cancel-button">
                             Cancelar
                         </Button>
-                        <Button variant="danger" onClick={handleConfirmDelete}>
+                        <Button variant="danger" onClick={handleConfirmDelete} className="custom-button delete-button">
                             Excluir
                         </Button>
                     </Modal.Footer>
                 </Modal>
 
                 {/* Modal de Sucesso */}
-                <Modal show={showSuccessModal} onHide={handleCloseModal} centered>
-                    <Modal.Header closeButton className="bg-success text-white">
-                        <Modal.Title>Sucesso</Modal.Title>
+                <Modal
+                    show={showSuccessModal}
+                    onHide={handleCloseModal}
+                    centered
+                    className="feedback-modal success-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header success-header">
+                        <Modal.Title>Sucesso!</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body className="bg-success text-white">
-                        Solicitação enviada com sucesso!
+                    <Modal.Body className="modal-custom-body text-center">
+                        <div className="success-icon-container">
+                            <div className="success-icon">✓</div>
+                        </div>
+                        <p className="mt-3">Solicitação enviada com sucesso!</p>
                     </Modal.Body>
-                    <Modal.Footer className="bg-success">
-                        <Button variant="light" onClick={handleCloseModal}>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="success" onClick={handleCloseModal} className="custom-button success-button">
                             Fechar
                         </Button>
                     </Modal.Footer>
                 </Modal>
 
                 {/* Modal de Erro */}
-                <Modal show={showErrorModal} onHide={handleCloseModal} centered>
-                    <Modal.Header closeButton className="bg-danger text-white">
+                <Modal
+                    show={showErrorModal}
+                    onHide={() => setShowErrorModal(false)}
+                    centered
+                    className="feedback-modal error-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header error-header">
                         <Modal.Title>Erro</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body className="bg-danger text-white">
-                        {errorMessage}
+                    <Modal.Body className="modal-custom-body text-center">
+                        <div className="error-icon-container">
+                            <div className="error-icon">×</div>
+                        </div>
+                        <p className="mt-3">
+                            {errorMessage}
+                        </p>
                     </Modal.Body>
-                    <Modal.Footer className="bg-danger">
-                        <Button variant="light" onClick={handleCloseModal}>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="danger" onClick={() => setShowErrorModal(false)} className="custom-button error-button">
+                            Fechar
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                {/* Modal de Feedback */}
+                <Modal
+                    show={showFeedbackModal}
+                    onHide={handleCloseFeedback}
+                    centered
+                    className={`feedback-modal ${feedbackError ? 'error-modal' : 'success-modal'}`}
+                >
+                    <Modal.Header closeButton className={`modal-custom-header ${feedbackError ? 'error-header' : 'success-header'}`}>
+                        <Modal.Title>{feedbackError ? 'Erro' : 'Sucesso'}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="modal-custom-body text-center">
+                        <div className={feedbackError ? 'error-icon-container' : 'success-icon-container'}>
+                            <div className={feedbackError ? 'error-icon' : 'success-icon'}>
+                                {feedbackError ? '×' : '✓'}
+                            </div>
+                        </div>
+                        <p className={`mt-3 ${feedbackError ? 'text-danger' : 'text-success'}`}>
+                            {feedbackMessage}
+                        </p>
+                    </Modal.Body>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button
+                            variant={feedbackError ? 'danger' : 'success'}
+                            onClick={handleCloseFeedback}
+                            className={`custom-button ${feedbackError ? 'error-button' : 'success-button'}`}
+                        >
                             Fechar
                         </Button>
                     </Modal.Footer>

@@ -1,5 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap');
 
+/* Base Styles */
+:root {
+  --primary-color: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-dark: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --light-color: #f8f9fa;
+  --dark-color: #1f2937;
+  --gray-color: #e5e7eb;
+  --gray-dark: #6b7280;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --border-radius: 6px;
+  --transition-speed: 0.2s;
+
+  --vivid-sky-blue: #4cc9f0;
+  --blue-purple: #7209b7;
+  --purple: #6c63ff;
+  --teal: #08d1b2;
+  --indigo: #560bad;
+
+  /* Botões de ação personalizados */
+  --request-color: #8b5cf6;
+  /* Roxo (Solicitar Item) */
+  --request-hover: #7c3aed;
+  --add-color: #10b981;
+  /* Verde (Adicionar Item) */
+  --rel-hover: #059669;
+  --report-color: #f59e0b;
+  /* Amarelo/Laranja (Relatório) */
+  --report-hover: #d97706;
+}
+
 * {
   padding: 0;
   margin: 0;

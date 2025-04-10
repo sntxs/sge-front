@@ -4,7 +4,7 @@ import axios from 'axios';
 import '../../css/usersPanel.css';
 import { Modal, Button, Form, ToggleButton, ToggleButtonGroup, Alert } from 'react-bootstrap';
 import MaskedInput from 'react-text-mask';
-import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch, FaEye, FaEyeSlash, FaUserAlt } from 'react-icons/fa';
 import { BsFileEarmarkSpreadsheet } from "react-icons/bs";
 import { API_URL_GLOBAL } from '../../../api-config.jsx';
 import { MdDelete } from 'react-icons/md';
@@ -14,7 +14,9 @@ function UsersPanel({ username, onLogout }) {
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showEditAlert, setShowEditAlert] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -26,12 +28,15 @@ function UsersPanel({ username, onLogout }) {
     password: '',
     sectorId: '',
     isAdmin: false,
+    showPassword: false
   });
-  const [showAlert, setShowAlert] = useState(false);
-  const [showPasswordAlert, setShowPasswordAlert] = useState(false);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [sectors, setSectors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const togglePasswordVisibility = () => {
     setFormData(prevState => ({
@@ -39,6 +44,7 @@ function UsersPanel({ username, onLogout }) {
       showPassword: !prevState.showPassword
     }));
   };
+
   // Funções de Adição
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,8 +60,6 @@ function UsersPanel({ username, onLogout }) {
       // Remover máscaras do CPF e telefone
       const cleanCPF = formData.cpf.replace(/\D/g, '');
       const cleanPhoneNumber = formData.phoneNumber.replace(/\D/g, '');
-
-      console.log({ ...formData, cpf: cleanCPF, phoneNumber: cleanPhoneNumber });
 
       const response = await axios.post(`${API_URL_GLOBAL}/User`, {
         name: formData.name,
@@ -74,7 +78,6 @@ function UsersPanel({ username, onLogout }) {
         }
       );
       if (response.status === 200) {
-        console.log('Usuário adicionado com sucesso');
         setFormData({
           name: '',
           email: '',
@@ -83,35 +86,27 @@ function UsersPanel({ username, onLogout }) {
           username: '',
           password: '',
           isAdmin: false,
-          sectorId: ''
+          sectorId: '',
+          showPassword: false
         });
         setShowModal(false);
-        setShowAlert(true);
-        setTimeout(() => {
-          setShowAlert(false);
-          window.location.reload();
-        }, 3000);
+        setShowSuccessModal(true);
+        fetchUsers();
       } else {
-        console.error('Erro ao adicionar usuário');
+        setErrorMessage('Erro ao adicionar usuário');
+        setShowErrorModal(true);
       }
     } catch (error) {
-      console.error('Erro ao conectar com o banco:', error);
+      setErrorMessage(error.response?.data?.message || 'Erro ao conectar com o banco');
+      setShowErrorModal(true);
     }
   };
 
-
-  /*   
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState(''); 
-  */
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
-
   useEffect(() => {
+    fetchUsers();
+    fetchSectors();
+  }, []);
+
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
@@ -123,15 +118,13 @@ function UsersPanel({ username, onLogout }) {
         setUsers(response.data);
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
+      setErrorMessage(error.response?.data?.message || 'Erro ao buscar usuários');
+      setShowErrorModal(true);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
     const fetchSectors = async () => {
       try {
         const response = await axios.get(`${API_URL_GLOBAL}/Sector/`, {
@@ -142,11 +135,10 @@ function UsersPanel({ username, onLogout }) {
         setSectors(response.data);
       } catch (error) {
         console.error('Erro ao buscar setores:', error);
+      setErrorMessage(error.response?.data?.message || 'Erro ao buscar setores');
+      setShowErrorModal(true);
       }
     };
-
-    fetchSectors();
-  }, []);
 
   const handleEdit = (user) => {
     setCurrentUser({
@@ -157,16 +149,11 @@ function UsersPanel({ username, onLogout }) {
   };
 
   const handleDelete = (user) => {
-    setCurrentUser(user);
+    setItemToDelete(user);
     setShowDeleteModal(true);
   };
 
   const handleSaveEdit = async () => {
-    /*     if (password !== confirmPassword) {
-          setPasswordError('As senhas não coincidem!');
-          return;
-        } */
-
     try {
       const cleanCPF = currentUser.cpf.replace(/\D/g, '');
       const cleanPhoneNumber = currentUser.phoneNumber.replace(/\D/g, '');
@@ -185,29 +172,17 @@ function UsersPanel({ username, onLogout }) {
         }
       );
       setShowEditModal(false);
-      setShowEditAlert(true);
-      setTimeout(() => {
-        setShowEditAlert(false);
-        window.location.reload();
-      }, 3000);
-      // resetPasswordFields();
-      // Atualizar a lista de usuários
-      const response = await axios.get(`${API_URL_GLOBAL}/User/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-      setUsers(response.data);
+      setShowSuccessModal(true);
+      fetchUsers();
     } catch (error) {
-      console.error('Erro ao editar usuário:', error);
+      setErrorMessage(error.response?.data?.message || 'Erro ao editar usuário');
+      setShowErrorModal(true);
     }
   };
 
   const handleConfirmDelete = async () => {
     try {
-      await axios.delete(`${API_URL_GLOBAL}/User/${currentUser.id}`,
+      await axios.delete(`${API_URL_GLOBAL}/User/${itemToDelete.id}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -215,22 +190,11 @@ function UsersPanel({ username, onLogout }) {
         }
       );
       setShowDeleteModal(false);
-      setShowDeleteAlert(true);
-      setTimeout(() => {
-        setShowDeleteAlert(false);
-        window.location.reload();
-      }, 3000);
-      // Atualizar a lista de usuários
-      const response = await axios.get(`${API_URL_GLOBAL}/User/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-      setUsers(response.data);
+      setShowSuccessModal(true);
+      fetchUsers();
     } catch (error) {
-      console.error('Erro ao deletar usuário:', error);
+      setErrorMessage(error.response?.data?.message || 'Erro ao deletar usuário');
+      setShowErrorModal(true);
     }
   };
 
@@ -240,15 +204,12 @@ function UsersPanel({ username, onLogout }) {
     }
   };
 
-  /*   const resetPasswordFields = () => {
-      setPassword('');
-      setConfirmPassword('');
-      setPasswordError('');
-    }; */
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+  };
 
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    // resetPasswordFields();
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
   };
 
   const filteredUsers = users.filter(user =>
@@ -287,58 +248,6 @@ function UsersPanel({ username, onLogout }) {
     ];
     ws['!cols'] = columnWidths;
 
-    // Estilizar cabeçalhos
-    const headerRange = XLSX.utils.decode_range(ws['!ref']);
-    for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (!ws[cellRef]) continue;
-
-      ws[cellRef].s = {
-        font: {
-          bold: true,
-          sz: 20,
-          color: { rgb: "000000" }
-        },
-        fill: {
-          fgColor: { rgb: "CCCCCC" }
-        },
-        alignment: {
-          horizontal: "center",
-          vertical: "center"
-        },
-        border: {
-          top: { style: "medium" },
-          bottom: { style: "medium" },
-          left: { style: "medium" },
-          right: { style: "medium" }
-        }
-      };
-    }
-
-    // Aplicar borda e alinhamento em todas as células
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let row = range.s.r; row <= range.e.r; row++) {
-      for (let col = range.s.c; col <= range.e.c; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-        if (!ws[cellRef]) continue;
-
-        ws[cellRef].s = {
-          ...ws[cellRef].s,
-          border: {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" }
-          },
-          alignment: {
-            horizontal: "center",
-            vertical: "center",
-            wrapText: true
-          }
-        };
-      }
-    }
-
     // Criar workbook e adicionar planilha
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Usuários");
@@ -376,13 +285,26 @@ function UsersPanel({ username, onLogout }) {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   return (
-    <div className="d-flex">
+    <div className="users-container">
       <SideMenu username={username} onLogout={onLogout} />
-      <div className="flex-grow-1 p-4">
-        <h1 className="text-center">Painel de Usuários</h1>
+      <div className="users-content">
+        {/* Header Card */}
+        <div className="header-card">
+          <div className="header-content">
+            <div className="header-icon">
+              <FaUserAlt size={30} />
+            </div>
+            <div>
+              <h1 className="mb-0">Painel de Usuários</h1>
+              <p className="mb-0">Gerencie todos os usuários do sistema</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div className="search-container position-relative">
+        {/* Control Panel */}
+        <div className="control-panel">
+          <div className="search-container">
+            <div className="search-wrapper">
             <FaSearch className="search-icon" />
             <input
               type="text"
@@ -392,243 +314,117 @@ function UsersPanel({ username, onLogout }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="d-flex">
+          </div>
+          <div className="action-buttons">
             <button
-              className="btn btn-primary me-2"
+              className="btn btn-request"
               onClick={() => setShowModal(true)}
             >
-              Adicionar Usuário
+              <FaUserAlt /> Adicionar Usuário
             </button>
             <button
-              className="btn btn-success ml-2"
+              className="btn btn-rel"
               onClick={exportToExcel}
             >
-              <BsFileEarmarkSpreadsheet className='mb-1 me-2' />
-              Relatório
+              <BsFileEarmarkSpreadsheet /> Relatório
             </button>
           </div>
         </div>
 
-        {/* Modal de Adição */}
-        <div className="d-flex">
-          <Modal
-            show={showModal}
-            onHide={() => setShowModal(false)}
-            dialogClassName="modal-90w"
-            aria-labelledby="example-custom-modal-styling-title"
-            centered
-          >
-            <Modal.Header closeButton>
-              <Modal.Title id="example-custom-modal-styling-title">Adicionar Usuário</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Nome</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
+        {/* Table Container */}
+        <div className="table-container">
+          {isLoading ? (
+            <div className="spinner">
+              <div className="bounce1"></div>
+              <div className="bounce2"></div>
+              <div className="bounce3"></div>
                 </div>
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                  />
+          ) : filteredUsers.length === 0 ? (
+            <div className="empty-state">
+              <FaUserAlt size={50} className="empty-icon" />
+              <h4>Nenhum usuário encontrado</h4>
+              <p>Não existem usuários cadastrados ou correspondentes à sua busca.</p>
                 </div>
-                <div className="mb-3">
-                  <label htmlFor="phoneNumber" className="form-label">Telefone</label>
-                  <MaskedInput
-                    mask={['(', /[1-9]/, /\d/, ')', ' ', /\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
-                    className="form-control"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="cpf" className="form-label">CPF</label>
-                  <MaskedInput
-                    mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
-                    className="form-control"
-                    id="cpf"
-                    name="cpf"
-                    value={formData.cpf}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="username" className="form-label">Nome de Usuário</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Senha</label>
-                  <div className="input-group">
-                    <input
-                      type={formData.showPassword ? "text" : "password"}
-                      className="form-control"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-outline-dark"
-                      onClick={togglePasswordVisibility}
-                    >
-                      {formData.showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="sectorId" className="form-label">Setor</label>
-                  <Form.Select
-                    id="sectorId"
-                    name="sectorId"
-                    value={formData.sectorId}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Selecione um setor</option>
-                    {sectors.map(sector => (
-                      <option key={sector.id} value={sector.id}>
-                        {sector.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Permissão Administrador</label>
-                  <div>
-                    <ToggleButtonGroup
-                      type="radio"
-                      name="isAdmin"
-                      value={formData.isAdmin ? 1 : 0}
-                      onChange={(val) => setFormData(prevState => ({ ...prevState, isAdmin: val === 1 }))}
-                    >
-                      <ToggleButton id="tbg-radio-1" value={1} variant={formData.isAdmin ? "primary" : "light"} className={formData.isAdmin ? "toggle-button-primary" : "toggle-button-light"}>
-                        Sim
-                      </ToggleButton>
-                      <ToggleButton id="tbg-radio-2" value={0} variant={formData.isAdmin ? "light" : "primary"} className={formData.isAdmin ? "toggle-button-light" : "toggle-button-primary"}>
-                        Não
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </div>
-                </div>
-                <Modal.Footer>
-                  <Button className='right' variant="primary" type="submit">
-                    Cadastrar
-                  </Button>
-                </Modal.Footer>
-              </form>
-            </Modal.Body>
-          </Modal>
-          {showAlert && (
-            <Alert variant="success" className="mt-3">
-              Usuário cadastrado com sucesso! A página será recarregada em 3 segundos.
-            </Alert>
-          )}
-        </div>
-
-        {/* Tabela de Usuários */}
-        <table className="table table-striped">
+          ) : (
+            <table className="users-table">
           <thead>
-            <tr className='text-uppercase'>
-              <th className="text-center fw-bold" onClick={() => sortItems('name')} style={{ cursor: 'pointer' }}>
+                <tr>
+                  <th onClick={() => sortItems('name')}>
+                    <div className="th-content">
                 Nome {getSortIcon('name')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('email')} style={{ cursor: 'pointer' }}>
+                  <th onClick={() => sortItems('email')}>
+                    <div className="th-content">
                 Email {getSortIcon('email')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('phoneNumber')} style={{ cursor: 'pointer' }}>
+                  <th onClick={() => sortItems('phoneNumber')}>
+                    <div className="th-content">
                 Telefone {getSortIcon('phoneNumber')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('cpf')} style={{ cursor: 'pointer' }}>
+                  <th onClick={() => sortItems('cpf')}>
+                    <div className="th-content">
                 CPF {getSortIcon('cpf')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('username')} style={{ cursor: 'pointer' }}>
+                  <th onClick={() => sortItems('username')}>
+                    <div className="th-content">
                 Nome de Usuário {getSortIcon('username')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('sectorName')} style={{ cursor: 'pointer' }}>
+                  <th onClick={() => sortItems('sectorName')}>
+                    <div className="th-content">
                 Setor {getSortIcon('sectorName')}
+                    </div>
+                  </th>
+                  <th onClick={() => sortItems('isAdmin')}>
+                    <div className="th-content">
+                      Permissão {getSortIcon('isAdmin')}
+                    </div>
               </th>
-              <th className="text-center fw-bold" onClick={() => sortItems('isAdmin')} style={{ cursor: 'pointer' }}>
-                Permissão de Administrador {getSortIcon('isAdmin')}
+                  <th>
+                    <div className="th-content">
+                      Ações
+                    </div>
               </th>
-              <th className="text-center fw-bold">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={8} className="text-center py-4">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Carregando...</span>
-                  </div>
-                  <p className="mt-2 mb-0">Carregando usuários...</p>
-                </td>
-              </tr>
-            ) : currentUsers.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="text-center py-4">
-                  <p className="mb-0">Nenhum usuário encontrado.</p>
-                </td>
-              </tr>
-            ) : (
-              currentUsers.map(user => (
-                <tr key={user.id}>
-                  <td className="align-middle text-center">{user.name}</td>
-                  <td className="align-middle text-center">{user.email}</td>
-                  <td className="align-middle text-center">{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
-                  <td className="align-middle text-center">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
-                  <td className="align-middle text-center">{user.username}</td>
-                  <td className="align-middle text-center">{user.sector.name}</td>
-                  <td className="align-middle text-center">{user.isAdmin ? 'Sim' : 'Não'}</td>
-                  <td className="align-middle text-center">
-                    <button className="btn btn-primary btn-sm m-1" onClick={() => handleEdit(user)}>
+                {currentUsers.map(user => (
+                  <tr key={user.id} className="users-row">
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td>{user.phoneNumber.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
+                    <td>{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</td>
+                    <td>{user.username}</td>
+                    <td>{user.sector.name}</td>
+                    <td>{user.isAdmin ? 'Sim' : 'Não'}</td>
+                    <td>
+                      <div className="action-cell">
+                        <button className="action-btn edit-btn" onClick={() => handleEdit(user)}>
                       <FaEdit />
                     </button>
-                    <button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(user)}>
+                        <button className="action-btn delete-btn" onClick={() => handleDelete(user)}>
                       <MdDelete />
                     </button>
+                      </div>
                   </td>
                 </tr>
-              ))
-            )}
+                ))}
           </tbody>
         </table>
+          )}
+        </div>
 
-        {/* Paginação */}
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <div>
+        {/* Pagination */}
+        {!isLoading && filteredUsers.length > 0 && (
+          <div className="pagination-container">
+            <div className="showing-info">
             Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredUsers.length)} de {filteredUsers.length} usuários
           </div>
-          <nav>
-            <ul className="pagination">
+            <ul className="custom-pagination">
               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                 <button
                   className="page-link"
@@ -674,82 +470,211 @@ function UsersPanel({ username, onLogout }) {
                 </button>
               </li>
             </ul>
-          </nav>
+          </div>
+        )}
+
+        {/* Modal de Adição */}
+        <Modal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          centered
+          className="custom-modal"
+        >
+          <Modal.Header closeButton className="modal-custom-header">
+            <Modal.Title>Adicionar Usuário</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="modal-custom-body">
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label htmlFor="name" className="form-label">Nome</label>
+                <input
+                  type="text"
+                  className="form-control custom-input"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label">Email</label>
+                <input
+                  type="email"
+                  className="form-control custom-input"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="phoneNumber" className="form-label">Telefone</label>
+                <MaskedInput
+                  mask={['(', /[1-9]/, /\d/, ')', ' ', /\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
+                  className="form-control custom-input"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="cpf" className="form-label">CPF</label>
+                <MaskedInput
+                  mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
+                  className="form-control custom-input"
+                  id="cpf"
+                  name="cpf"
+                  value={formData.cpf}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="username" className="form-label">Nome de Usuário</label>
+                <input
+                  type="text"
+                  className="form-control custom-input"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="password" className="form-label">Senha</label>
+                <div className="input-group">
+                  <input
+                    type={formData.showPassword ? "text" : "password"}
+                    className="form-control custom-input"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-dark"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {formData.showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="sectorId" className="form-label">Setor</label>
+                <Form.Select
+                  id="sectorId"
+                  name="sectorId"
+                  value={formData.sectorId}
+                  onChange={handleInputChange}
+                  required
+                  className="custom-input"
+                >
+                  <option value="">Selecione um setor</option>
+                  {sectors.map(sector => (
+                    <option key={sector.id} value={sector.id}>
+                      {sector.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Permissão Administrador</label>
+                <div>
+                  <ToggleButtonGroup
+                    type="radio"
+                    name="isAdmin"
+                    value={formData.isAdmin ? 1 : 0}
+                    onChange={(val) => setFormData(prevState => ({ ...prevState, isAdmin: val === 1 }))}
+                  >
+                    <ToggleButton id="tbg-radio-1" value={1} variant={formData.isAdmin ? "primary" : "light"}>
+                      Sim
+                    </ToggleButton>
+                    <ToggleButton id="tbg-radio-2" value={0} variant={formData.isAdmin ? "light" : "primary"}>
+                      Não
+                    </ToggleButton>
+                  </ToggleButtonGroup>
         </div>
       </div>
+              <div className="text-end mt-4">
+                <Button variant="primary" type="submit" className="custom-button">
+                  Cadastrar
+                </Button>
+              </div>
+            </form>
+          </Modal.Body>
+        </Modal>
 
       {/* Modal de Edição */}
-      <Modal show={showEditModal} onHide={handleCloseEditModal}>
-        <Modal.Header closeButton>
+        <Modal 
+          show={showEditModal} 
+          onHide={() => setShowEditModal(false)}
+          centered
+          className="custom-modal"
+        >
+          <Modal.Header closeButton className="modal-custom-header">
           <Modal.Title>Editar Usuário</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+          <Modal.Body className="modal-custom-body">
           {currentUser && (
             <Form onKeyPress={handleKeyPress}>
-              <Form.Group controlId="formName">
+                <Form.Group className="mb-3">
                 <Form.Label>Nome</Form.Label>
                 <Form.Control
                   type="text"
                   value={currentUser.name}
                   onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
+                    className="custom-input"
                 />
               </Form.Group>
-              <Form.Group controlId="formEmail">
+                <Form.Group className="mb-3">
                 <Form.Label>Email</Form.Label>
                 <Form.Control
                   type="email"
                   value={currentUser.email}
                   onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+                    className="custom-input"
                 />
               </Form.Group>
-              <Form.Group controlId="formPhoneNumber">
+                <Form.Group className="mb-3">
                 <Form.Label>Telefone</Form.Label>
                 <MaskedInput
                   mask={['(', /[1-9]/, /\d/, ')', ' ', /\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
-                  className="form-control"
+                    className="form-control custom-input"
                   value={currentUser.phoneNumber}
                   onChange={(e) => setCurrentUser({ ...currentUser, phoneNumber: e.target.value })}
                 />
               </Form.Group>
-              <Form.Group controlId="formCpf">
+                <Form.Group className="mb-3">
                 <Form.Label>CPF</Form.Label>
                 <MaskedInput
                   mask={[/\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '-', /\d/, /\d/]}
-                  className="form-control"
+                    className="form-control custom-input"
                   value={currentUser.cpf}
                   onChange={(e) => setCurrentUser({ ...currentUser, cpf: e.target.value })}
                 />
               </Form.Group>
-              <Form.Group controlId="formUsername">
+                <Form.Group className="mb-3">
                 <Form.Label>Nome de Usuário</Form.Label>
                 <Form.Control
                   type="text"
                   value={currentUser.username}
                   onChange={(e) => setCurrentUser({ ...currentUser, username: e.target.value })}
+                    className="custom-input"
                 />
               </Form.Group>
-              {/*               <Form.Group controlId="formPassword">
-                <Form.Label>Senha</Form.Label>
-                <Form.Control
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                {passwordError && <div style={{ color: 'red' }}>{passwordError}</div>}
-              </Form.Group>
-              <Form.Group controlId="formConfirmPassword">
-                <Form.Label>Confirmar Senha</Form.Label>
-                <Form.Control
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </Form.Group> */}
-              <Form.Group controlId="formSector">
+                <Form.Group className="mb-3">
                 <Form.Label>Setor</Form.Label>
                 <Form.Select
                   value={currentUser.sectorId}
                   onChange={(e) => setCurrentUser({ ...currentUser, sectorId: e.target.value })}
+                    className="custom-input"
                 >
                   <option value="">Selecione um setor</option>
                   {sectors.map(sector => (
@@ -759,7 +684,7 @@ function UsersPanel({ username, onLogout }) {
                   ))}
                 </Form.Select>
               </Form.Group>
-              <Form.Group controlId="formIsAdmin">
+                <Form.Group className="mb-3">
                 <Form.Label>Permissão Administrador</Form.Label>
                 <div>
                   <ToggleButtonGroup
@@ -768,10 +693,10 @@ function UsersPanel({ username, onLogout }) {
                     value={currentUser.isAdmin ? 1 : 0}
                     onChange={(val) => setCurrentUser({ ...currentUser, isAdmin: val === 1 })}
                   >
-                    <ToggleButton id="tbg-radio-1" value={1} variant={currentUser.isAdmin ? "primary" : "light"} className={currentUser.isAdmin ? "toggle-button-primary" : "toggle-button-light"}>
+                      <ToggleButton id="tbg-edit-1" value={1} variant={currentUser.isAdmin ? "primary" : "light"}>
                       Sim
                     </ToggleButton>
-                    <ToggleButton id="tbg-radio-2" value={0} variant={currentUser.isAdmin ? "light" : "primary"} className={currentUser.isAdmin ? "toggle-button-light" : "toggle-button-primary"}>
+                      <ToggleButton id="tbg-edit-2" value={0} variant={currentUser.isAdmin ? "light" : "primary"}>
                       Não
                     </ToggleButton>
                   </ToggleButtonGroup>
@@ -780,44 +705,102 @@ function UsersPanel({ username, onLogout }) {
             </Form>
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseEditModal}>
+          <Modal.Footer className="modal-custom-footer">
+            <Button variant="secondary" onClick={() => setShowEditModal(false)} className="custom-button cancel-button">
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleSaveEdit}>
+            <Button variant="primary" onClick={handleSaveEdit} className="custom-button">
             Salvar
           </Button>
         </Modal.Footer>
       </Modal>
-      {showEditAlert && (
-        <Alert variant="success" className="mt-3">
-          Usuário editado com sucesso! A página será recarregada em 3 segundos.
-        </Alert>
-      )}
-
-      {showDeleteAlert && (
-        <Alert variant="success" className="mt-3">
-          Usuário deletado com sucesso! A página será recarregada em 3 segundos.
-        </Alert>
-      )}
 
       {/* Modal de Confirmação de Deleção */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirmar Deleção</Modal.Title>
+        <Modal 
+          show={showDeleteModal} 
+          onHide={() => setShowDeleteModal(false)}
+          centered
+          className="custom-modal"
+        >
+          <Modal.Header closeButton className="modal-custom-header">
+            <Modal.Title>Confirmar Exclusão</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          Tem certeza que deseja deletar o usuário {currentUser && currentUser.name}?
+          <Modal.Body className="modal-custom-body text-center">
+            <div className="delete-icon-container mb-4">
+              <MdDelete size={40} />
+            </div>
+            <h4>Tem certeza que deseja excluir este usuário?</h4>
+            <p className="mb-0">
+              {itemToDelete && `${itemToDelete.name} (${itemToDelete.username})`}
+            </p>
+            <p className="text-muted">Esta ação não poderá ser desfeita.</p>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          <Modal.Footer className="modal-custom-footer">
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="custom-button cancel-button">
             Cancelar
           </Button>
-          <Button variant="danger" onClick={handleConfirmDelete}>
-            Deletar
+            <Button variant="danger" onClick={handleConfirmDelete} className="custom-button delete-button">
+              Excluir
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Modal de Sucesso */}
+        <Modal
+          show={showSuccessModal}
+          onHide={handleCloseSuccessModal}
+          centered
+          className="feedback-modal"
+        >
+          <Modal.Header closeButton className="modal-custom-header success-header">
+            <Modal.Title>Operação Concluída</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="modal-custom-body text-center py-4">
+            <div className="success-icon-container mb-3">
+              <span className="success-icon">✓</span>
+            </div>
+            <h4>Operação realizada com sucesso!</h4>
+            <p>Os dados foram atualizados no sistema.</p>
+          </Modal.Body>
+          <Modal.Footer className="modal-custom-footer">
+            <Button
+              variant="success"
+              onClick={handleCloseSuccessModal}
+              className="custom-button success-button mx-auto"
+            >
+              Fechar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Modal de Erro */}
+        <Modal
+          show={showErrorModal}
+          onHide={handleCloseErrorModal}
+          centered
+          className="feedback-modal"
+        >
+          <Modal.Header closeButton className="modal-custom-header error-header">
+            <Modal.Title>Erro</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="modal-custom-body text-center py-4">
+            <div className="error-icon-container mb-3">
+              <span className="error-icon">!</span>
+            </div>
+            <h4>Ocorreu um erro</h4>
+            <p>{errorMessage || "Não foi possível completar a operação."}</p>
+          </Modal.Body>
+          <Modal.Footer className="modal-custom-footer">
+            <Button
+              variant="danger"
+              onClick={handleCloseErrorModal}
+              className="custom-button error-button mx-auto"
+            >
+              Fechar
           </Button>
         </Modal.Footer>
       </Modal>
+      </div>
     </div>
   );
 }

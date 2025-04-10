@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaUserAlt } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUserAlt, FaSignInAlt } from 'react-icons/fa';
 import { API_URL_GLOBAL } from '../../api-config.jsx';
 import '../css/login.css';
+import PropTypes from 'prop-types';
 
 function Login({ onLoginSuccess }) {
     const navigate = useNavigate();
@@ -50,9 +51,6 @@ function Login({ onLoginSuccess }) {
 
                 localStorage.setItem('id', responseUser.data.id);
 
-
-                // console.log(responseUser.data.isAdmin)
-
                 onLoginSuccess(responseUser.data.name);
                 navigate('/home');
             } else {
@@ -60,7 +58,7 @@ function Login({ onLoginSuccess }) {
                 setModalVisible(true);
             }
         } catch (error) {
-            if (error.response.status === 400) {
+            if (error.response?.status === 400) {
                 setModalMessage('Usuário ou senha inválidos');
                 setModalVisible(true);
             } else {
@@ -85,21 +83,24 @@ function Login({ onLoginSuccess }) {
     };
 
     return (
-        <div id="login" className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
-            <div className="card shadow-lg">
-                <div className="card-body">
-                    {/* <img src="./src/components/img/patanal-ar-logo.png" alt="Pantanal" className="pantanal-logo mx-auto d-block" /> */}
-                    <div className="text-center">
-                        <h1>S.G.E</h1>
-                        <p>Sistema de Gerenciamento de Estoque</p>
+        <div className="login-container">
+            <div className="login-card">
+                <div className="login-header">
+                    <div className="login-icon">
+                        <FaSignInAlt size={40} />
                     </div>
+                    <h1 className="login-title">S.G.E</h1>
+                    <p className="login-subtitle">Sistema de Gerenciamento de Estoque</p>
+                </div>
+                
+                <div className="login-body">
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
+                        <div className="form-input-group">
                             <label htmlFor="username" className="form-label">Usuário:</label>
-                            <div className="input-group">
+                            <div className="input-icon-wrapper">
                                 <input
                                     type="text"
-                                    className="form-control"
+                                    className="form-input"
                                     id="username"
                                     value={username}
                                     onChange={(e) => setUser(e.target.value)}
@@ -107,18 +108,20 @@ function Login({ onLoginSuccess }) {
                                 />
                                 <button
                                     type="button"
-                                    className="btn btn-outline-dark"
+                                    className="input-icon-button"
+                                    tabIndex="-1"
                                 >
                                     <FaUserAlt />
                                 </button>
                             </div>
                         </div>
-                        <div className="mb-3">
+                        
+                        <div className="form-input-group">
                             <label htmlFor="password" className="form-label">Senha:</label>
-                            <div className="input-group">
+                            <div className="input-icon-wrapper">
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    className="form-control"
+                                    className="form-input"
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -126,14 +129,15 @@ function Login({ onLoginSuccess }) {
                                 />
                                 <button
                                     type="button"
-                                    className="btn btn-outline-dark"
+                                    className="input-icon-button"
                                     onClick={togglePasswordVisibility}
                                 >
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
                         </div>
-                        <div className="mb-3 form-check">
+                        
+                        <div className="form-check">
                             <input
                                 type="checkbox"
                                 className="form-check-input"
@@ -141,37 +145,48 @@ function Login({ onLoginSuccess }) {
                                 checked={rememberPassword}
                                 onChange={toggleRememberPassword}
                             />
-                            <label className="form-check-label" htmlFor="rememberPassword">Lembrar senha</label>
+                            <label className="form-check-label" htmlFor="rememberPassword">
+                                Lembrar senha
+                            </label>
                         </div>
-                        <div className="d-grid pt-4">
-                            <button 
-                                type="submit" 
-                                className="botaoLogin text-uppercase" 
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <div className="spinner-border spinner-border-sm me-2" role="status">
-                                        <span className="visually-hidden">Carregando...</span>
+                        
+                        <button 
+                            type="submit" 
+                            className="login-button" 
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="spinner-container">
+                                        <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Carregando...</span>
+                                        </div>
                                     </div>
-                                ) : 'Entrar'}
-                            </button>
-                        </div>
+                                    Processando...
+                                </>
+                            ) : (
+                                <>Entrar</>
+                            )}
+                        </button>
                     </form>
                 </div>
             </div>
 
+            {/* Modal de Feedback */}
             <div className={`modal fade ${modalVisible ? 'show' : ''}`} tabIndex="-1" role="dialog" style={{ display: modalVisible ? 'block' : 'none' }}>
                 <div className="modal-dialog" role="document">
-                    <div className="modal-content">
-                        <div className="modal-header">
+                    <div className="modal-content feedback-modal">
+                        <div className="modal-header modal-custom-header">
                             <h5 className="modal-title">Atenção</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Fechar" onClick={closeModal}></button>
+                            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar" onClick={closeModal}></button>
                         </div>
-                        <div className="modal-body">
+                        <div className="modal-body modal-custom-body">
                             <p>{modalMessage}</p>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={closeModal}>Fechar</button>
+                            <button type="button" className="login-button" style={{ width: 'auto' }} onClick={closeModal}>
+                                Fechar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -180,5 +195,9 @@ function Login({ onLoginSuccess }) {
         </div>
     );
 }
+
+Login.propTypes = {
+    onLoginSuccess: PropTypes.func.isRequired
+};
 
 export default Login;

@@ -2,8 +2,8 @@
     width: 250px;
 }
 
-.w-60px {
-    width: 60px;
+.w-70px {
+    width: 70px;
 }
 
 .transition-width {
@@ -14,85 +14,454 @@
     transition: margin-left 0.3s ease;
 }
 
-.submenu-wrapper {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
+/* Menu base styling */
+#menu-left {
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    color: white;
+    z-index: 1050;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    top: 0;
 }
 
-.submenu-wrapper.open {
-    max-height: 200px;
-    /* Ajuste este valor conforme necessário */
-    transition: max-height 0.3s ease-in;
+#menu-left::-webkit-scrollbar {
+    width: 5px;
 }
 
-.submenu {
-    opacity: 0;
-    transition: opacity 0.2s ease-out;
+#menu-left::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
 }
 
-.submenu-wrapper.open .submenu {
-    opacity: 1;
-    transition: opacity 0.2s ease-in 0.1s;
+/* Toggle button styling */
+.menu-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: white;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.3s ease;
 }
 
-/* Novo código para o hover quando o menu está fechado */
-.w-60px .menu-item {
+.menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Menu content container */
+.menu-content {
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 60px);
+}
+
+/* User profile section */
+.user-profile {
+    display: flex;
+    align-items: center;
+    padding: 10px 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
 }
 
-.w-60px .menu-item:hover .submenu-wrapper {
-    position: absolute;
-    left: 100%;
-    top: 0;
-    background-color: #343a40;
-    padding: 10px;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    max-height: none;
-    width: 200px;
-    z-index: 1051;
-}
-
-.w-60px .menu-item:hover .submenu {
-    opacity: 1;
-}
-
-.w-60px .menu-item:hover .submenu-wrapper,
-.w-60px .menu-item:hover .submenu {
-    transition: all 0.3s ease-in;
-}
-
-/* Novo código para centralizar as setas */
-.menu-item button {
+.avatar-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
     display: flex;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    color: rgba(255, 255, 255, 0.9);
+    flex-shrink: 0;
+    margin: 0 auto;
 }
 
-.menu-item button .menu-text {
-    flex-grow: 1;
-    text-align: left;
-}
-
-.menu-item button .menu-icon {
+.w-250px .avatar-container {
+    margin: 0;
     margin-right: 10px;
 }
 
-.menu-item button .arrow-icon {
-    margin-left: 10px;
+.user-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
 }
 
-/* Ajuste no z-index do menu lateral quando fechado */
-#menu-left {
-    z-index: 1050;
+.username {
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.user-role {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-transparent {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Navigation styling */
+.menu-nav {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-list-item {
+    width: 100%;
+    position: relative;
+}
+
+/* Common styles for links and buttons */
+.menu-link,
+.menu-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.9);
+    border: none;
+    background: transparent;
+    position: relative;
+    text-align: left;
+}
+
+.menu-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 24px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+    margin-right: 10px;
+}
+
+/* Center icons when menu collapsed */
+.w-70px .menu-icon {
+    width: 100%;
+    margin: 0;
+    justify-content: center;
+}
+
+.menu-text {
+    flex-grow: 1;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+}
+
+.menu-arrow {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+/* Hover and active states */
+.menu-link:hover,
+.menu-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.menu-link:hover .menu-icon,
+.menu-button:hover .menu-icon {
+    color: #4e73df;
+}
+
+.menu-button:hover .menu-arrow {
+    transform: translateY(-2px);
+}
+
+/* Submenu styling */
+.submenu-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    margin-left: 0;
+}
+
+.submenu-wrapper.open {
+    max-height: 500px;
+    transition: max-height 0.5s ease;
+}
+
+.submenu {
+    list-style: none;
+    padding: 5px 0 5px 5px;
+    margin: 0;
+}
+
+/* Profile submenu specific */
+.user-submenu {
+    padding: 0;
+    margin-top: 10px;
+    margin-bottom: 0;
+    padding-left: 45px;
+}
+
+.user-submenu li a {
+    padding-left: 0;
+}
+
+.submenu li {
+    margin: 8px 0;
+}
+
+.submenu li a {
+    display: block;
+    padding: 8px 15px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.submenu li a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(3px);
+}
+
+/* Collapsed menu hover effect for submenus */
+.w-70px .menu-list-item {
+    position: relative;
+}
+
+/* Fix hover submenu display */
+.w-70px .menu-list-item:hover .submenu-wrapper {
+    display: block !important;
+    position: absolute;
+    left: 70px; /* Aligns with edge of menu */
+    top: 0;
+    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-height: none !important;
+    width: 200px;
+    z-index: 1051;
+    margin-left: 0;
+    opacity: 1;
+    animation: fadeIn 0.2s ease;
+}
+
+.w-70px .submenu {
+    padding: 0 !important;
+    display: block;
+    opacity: 1;
+}
+
+.w-70px .submenu li a {
+    padding-left: 15px;
+}
+
+/* Profile positioning for collapsed mode */
+.w-70px .user-profile {
+    position: relative;
+}
+
+.w-70px .user-profile:hover .user-submenu-wrapper {
+    display: block !important;
+    position: absolute;
+    left: 70px;
+    top: 0;
+    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-height: none !important;
+    width: 200px;
+    z-index: 1051;
+    margin-left: 0;
+    opacity: 1;
+    animation: fadeIn 0.2s ease;
+}
+
+.w-70px .user-submenu {
+    padding: 0;
+    margin-top: 10px;
+}
+
+/* Logout button specific styling */
+.logout-item {
+    margin-top: auto;
+}
+
+.logout-button {
+    color: #e74a3b !important;
+    text-align: left;
+}
+
+.logout-button:hover {
+    background: rgba(231, 74, 59, 0.1) !important;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
     #menu-left {
         bottom: 0;
         height: 100%;
         position: fixed;
     }
+    
+    .transition-margin {
+        transition: margin-left 0.3s ease, padding-left 0.3s ease;
+    }
+    
+    #content {
+        padding-left: 80px;
+    }
+}
+/* Animation for menu transition */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* MENU FECHADO - EXIBIÇÃO DE SUBMENUS EM MODAL */
+
+/* Cria um espaço seguro para a transição do mouse entre o menu e o submenu */
+.w-70px .menu-list-item,
+.w-70px .user-profile {
+    position: relative;
+}
+
+/* Espaço invisível para facilitar a transição do mouse */
+.w-70px .menu-list-item::after,
+.w-70px .user-profile::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -15px; /* Espaço extra para transição do mouse */
+    width: 15px;
+    height: 100%;
+    z-index: 9998;
+}
+
+/* Reset de regras que possam afetar a visibilidade */
+.w-70px .submenu-wrapper {
+    display: none; /* Oculta por padrão */
+    transition: visibility 0s, opacity 0.2s; /* Adiciona delay na transição */
+    position: fixed !important; /* Usa posicionamento fixo */
+    left: 70px !important; /* Alinha com a borda do menu */
+    width: 200px !important;
+    z-index: 9999 !important;
+    background-color: #2c3e50 !important;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 10px !important;
+    overflow: visible !important;
+}
+
+/* Exibe o submenu quando o mouse passa por cima do item do menu ou do próprio submenu */
+.w-70px .menu-list-item:hover .submenu-wrapper,
+.w-70px .submenu-wrapper:hover {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-height: none !important;
+}
+
+/* Adiciona uma área de segurança para o submenu também */
+.w-70px .submenu-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -15px; /* Área invisível à esquerda para conexão com o menu */
+    width: 15px;
+    height: 100%;
+    z-index: 9998;
+}
+
+/* Garante que o conteúdo do submenu seja visível */
+.w-70px .menu-list-item:hover .submenu,
+.w-70px .submenu-wrapper:hover .submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    padding: 5px !important;
+}
+
+/* Estilos para os itens dentro do submenu */
+.w-70px .submenu li {
+    display: block !important;
+    margin: 5px 0 !important;
+}
+
+.w-70px .submenu li a {
+    display: block !important;
+    padding: 8px 15px !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+/* Hover nos itens do submenu */
+.w-70px .submenu li a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+/* Estilos específicos para o submenu do perfil */
+.w-70px .user-profile:hover .user-submenu-wrapper,
+.w-70px .user-submenu-wrapper:hover {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-height: none !important;
+}
+
+.w-70px .user-profile:hover .user-submenu,
+.w-70px .user-submenu-wrapper:hover .user-submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    padding: 5px !important;
 }

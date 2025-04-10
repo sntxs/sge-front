@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Login from './components/layout/login';
 import Home from './components/layout/home';
-//import AddItemStock from './components/layout/stock/addItemStock';
 import StockPanel from './components/layout/stock/stockPanel';
 import RequestItem from './components/layout/stock/requestItem';
-//import AddUsers from './components/layout/users/addUsers';
 import UsersPanel from './components/layout/users/usersPanel';
-import SectorPanel from './components/layout/users/sectorPanel';
+import SectorPanel from './components/layout/sector/sectorPanel';
+import CategoryPanel from './components/layout/category/categoryPanel';
 import Profile from './components/layout/users/profile';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -69,9 +68,6 @@ function App() {
                 <Profile username={username} onLogout={handleLogout} />
               </PrivateRoute>
             } />
-{/*             <Route path="/add-item" element={
-              isLoggedIn ? <AddItemStock username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
-            } /> */}
             <Route path="/stock-panel" element={
               <PrivateRoute>
                 <StockPanel username={username} onLogout={handleLogout} />
@@ -82,9 +78,6 @@ function App() {
                 <RequestItem username={username} onLogout={handleLogout} />
               </PrivateRoute>
             } />
-{/*             <Route path="/add-user" element={
-              isLoggedIn ? <AddUsers username={username} onLogout={handleLogout} /> : <Navigate to="/login" />
-            } /> */}
             <Route path="/user-panel" element={
               <PrivateRoute>
                 <UsersPanel username={username} onLogout={handleLogout} />
@@ -93,6 +86,11 @@ function App() {
             <Route path="/sector-panel" element={
               <PrivateRoute>
                 <SectorPanel username={username} onLogout={handleLogout} />
+              </PrivateRoute>
+            } />
+            <Route path="/category-panel" element={
+              <PrivateRoute>
+                <CategoryPanel username={username} onLogout={handleLogout} />
               </PrivateRoute>
             } />
             <Route path="/" element={isLoggedIn ? <Navigate to={initialRoute} /> : <Navigate to="/login" />} />
