@@ -53,6 +53,7 @@ const RequestItem = ({ username, onLogout }) => {
                     id: item.id,
                     nomeProduto: item.name,
                     quantidade: item.quantity,
+                    categoryName: item.categoryName || 'Sem categoria',
                 }));
                 setStockItems(formattedItems);
             } catch (error) {
@@ -234,6 +235,7 @@ const RequestItem = ({ username, onLogout }) => {
     const exportToExcel = () => {
         const dataToExport = filteredRequestedItems.map(item => ({
             'Produto': item.productName,
+            'Categoria': item.categoryName || 'Sem categoria',
             'Solicitante': item.userName,
             'Setor': item.userSector.name,
             'Quantidade': item.quantity,
@@ -366,6 +368,12 @@ const RequestItem = ({ username, onLogout }) => {
                                         <span className="sort-icon">{getSortIcon('productName')}</span>
                                     </div>
                                 </th>
+                                <th onClick={() => sortItems('categoryName')}>
+                                    <div className="th-content">
+                                        Categoria
+                                        <span className="sort-icon">{getSortIcon('categoryName')}</span>
+                                    </div>
+                                </th>
                                 <th onClick={() => sortItems('userName')}>
                                     <div className="th-content">
                                         Solicitante
@@ -398,7 +406,7 @@ const RequestItem = ({ username, onLogout }) => {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 7 : 6} className="text-center py-4">
                                         <div className="spinner">
                                             <div className="bounce1"></div>
                                             <div className="bounce2"></div>
@@ -409,7 +417,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 </tr>
                             ) : currentItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 6 : 5} className="text-center py-4">
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 7 : 6} className="text-center py-4">
                                         <div className="empty-state">
                                             <MdInventory size={48} className="empty-icon" />
                                             <p className="mb-0">Nenhuma solicitação encontrada.</p>
@@ -420,6 +428,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 currentItems.map((item, index) => (
                                     <tr key={index} className="request-row">
                                         <td>{item.productName}</td>
+                                        <td>{item.categoryName || 'Sem categoria'}</td>
                                         <td>{item.userName}</td>
                                         <td>{item.userSector.name}</td>
                                         <td>{item.quantity}</td>
@@ -530,7 +539,7 @@ const RequestItem = ({ username, onLogout }) => {
                                     <option value="">Selecione um produto</option>
                                     {stockItems.map(item => (
                                         <option key={item.id} value={item.id}>
-                                            {item.nomeProduto}: {item.quantidade} unidades disponíveis
+                                            {item.nomeProduto} ({item.categoryName}) - {item.quantidade} unidades disponíveis
                                         </option>
                                     ))}
                                 </select>

@@ -4,7 +4,8 @@ import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { MdInventory } from 'react-icons/md';
 import { TbCategoryPlus } from "react-icons/tb";
 import { Link, useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import axios from 'axios';
+import { API_URL_GLOBAL } from '../../api-config.jsx';
 
 import '../css/side-menu.css';
 
@@ -17,6 +18,33 @@ function SideMenu({ username, onLogout }) {
     const navigate = useNavigate();
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const userTitle = isAdmin ? 'Administrador' : 'Usuário';
+    const [sector, setSector] = useState({ name: 'Carregando...' });
+    
+    useEffect(() => {
+        const fetchUserSector = async () => {
+            try {
+                const userId = localStorage.getItem('id');
+                if (userId) {
+                    const response = await axios.get(`${API_URL_GLOBAL}/User/${userId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    if (response.data && response.data.sector) {
+                        setSector(response.data.sector);
+                    } else {
+                        setSector({ name: 'Não atribuído' });
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao buscar setor do usuário:', error);
+                setSector({ name: 'Erro ao carregar' });
+            }
+        };
+        
+        fetchUserSector();
+    }, []);
 
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
@@ -60,10 +88,10 @@ function SideMenu({ username, onLogout }) {
     // Monitora redimensionamento e rolagem da página
     useEffect(() => {
         updateMenuItemPositions();
-        
+
         window.addEventListener('resize', updateMenuItemPositions);
         document.addEventListener('scroll', updateMenuItemPositions);
-        
+
         return () => {
             window.removeEventListener('resize', updateMenuItemPositions);
             document.removeEventListener('scroll', updateMenuItemPositions);
@@ -80,7 +108,7 @@ function SideMenu({ username, onLogout }) {
         Object.keys(menuItemPositions).forEach(itemId => {
             const submenuEl = submenusRef.current[itemId];
             const pos = menuItemPositions[itemId];
-            
+
             if (submenuEl && pos) {
                 submenuEl.style.top = `${pos.top}px`;
                 submenuEl.style.left = `${pos.left}px`;
@@ -153,10 +181,10 @@ function SideMenu({ username, onLogout }) {
                 <button className="menu-toggle" onClick={toggleMenu}>
                     {menuOpen ? <FaTimes size={22} /> : <FaBars size={22} />}
                 </button>
-                
+
                 <div className="menu-content">
                     {/* User Profile */}
-                    <div 
+                    <div
                         className="user-profile"
                         ref={el => menuItemsRef.current['profile'] = el}
                         onMouseEnter={updateMenuItemPositions}
@@ -164,26 +192,27 @@ function SideMenu({ username, onLogout }) {
                         <div className="avatar-container">
                             <FaUserCircle size={menuOpen ? 30 : 24} />
                         </div>
-                        
+
                         {menuOpen && (
                             <div className="user-info">
                                 <span className="username">{username}</span>
-                                <span className="user-role">{userTitle}</span>
+                                <span className="user-role">Cargo: {userTitle}</span>
+                                <span className="user-role">Setor: {sector.name}</span>
                             </div>
                         )}
-                        
+
                         {menuOpen && (
-                            <button 
-                                className="btn-transparent" 
+                            <button
+                                className="btn-transparent"
                                 onClick={() => toggleSubmenu('profile')}
                             >
                                 {activeSubmenu === 'profile' ? <FaChevronUp /> : <FaChevronDown />}
                             </button>
                         )}
                     </div>
-                    
+
                     {/* User profile submenu - visible when open or on hover */}
-                    <div 
+                    <div
                         className={`submenu-wrapper user-submenu-wrapper ${menuOpen && activeSubmenu === 'profile' ? 'open' : ''}`}
                         ref={el => submenusRef.current['profile'] = el}
                     >
@@ -193,16 +222,16 @@ function SideMenu({ username, onLogout }) {
                             </li>
                         </ul>
                     </div>
-                    
+
                     <nav className="menu-nav">
                         <ul className="menu-list">
                             {menuItems.map(item => {
                                 // Skip admin-only items if the user is not an admin
                                 if (item.adminOnly && !isAdmin) return null;
-                                
+
                                 return (
-                                    <li 
-                                        key={item.id} 
+                                    <li
+                                        key={item.id}
                                         className="menu-list-item"
                                         ref={el => menuItemsRef.current[item.id] = el}
                                         onMouseEnter={updateMenuItemPositions}
@@ -214,8 +243,8 @@ function SideMenu({ username, onLogout }) {
                                             </Link>
                                         ) : (
                                             <>
-                                                <button 
-                                                    className="menu-button" 
+                                                <button
+                                                    className="menu-button"
                                                     onClick={() => toggleSubmenu(item.id)}
                                                     title={item.title}
                                                 >
@@ -229,9 +258,9 @@ function SideMenu({ username, onLogout }) {
                                                         </>
                                                     )}
                                                 </button>
-                                                
+
                                                 {/* Submenu - visible when open or on hover */}
-                                                <div 
+                                                <div
                                                     className={`submenu-wrapper ${menuOpen && activeSubmenu === item.id ? 'open' : ''}`}
                                                     ref={el => submenusRef.current[item.id] = el}
                                                 >
@@ -248,7 +277,7 @@ function SideMenu({ username, onLogout }) {
                                     </li>
                                 );
                             })}
-                            
+
                             {/* Logout button */}
                             <li className="menu-list-item logout-item">
                                 <button onClick={handleLogout} className="menu-button logout-button" title="Sair">
@@ -266,10 +295,5 @@ function SideMenu({ username, onLogout }) {
         </>
     );
 }
-
-SideMenu.propTypes = {
-    username: PropTypes.string.isRequired,
-    onLogout: PropTypes.func.isRequired
-};
 
 export default SideMenu;

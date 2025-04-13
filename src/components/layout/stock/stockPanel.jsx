@@ -23,9 +23,11 @@ function PainelStock({ username, onLogout }) {
     userName: '',
     userId: id,
     quantity: '',
+    categoryId: '',
     createdAt: ''
   });
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -97,6 +99,8 @@ function PainelStock({ username, onLogout }) {
           description: item.description,
           userName: item.userName,
           quantity: item.quantity,
+          categoryName: item.categoryName || 'Sem categoria',
+          categoryId: item.categoryId,
           createdAt: new Date(item.createdAt).toLocaleDateString('pt-BR')
         }));
         setItems(formattedItems);
@@ -128,8 +132,23 @@ function PainelStock({ username, onLogout }) {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${API_URL_GLOBAL}/Category/`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error);
+      }
+    };
+
     fetchUsers();
     fetchItems();
+    fetchCategories();
   }, []);
 
   const handleEdit = (item) => {
@@ -245,6 +264,7 @@ function PainelStock({ username, onLogout }) {
     const dataToExport = filteredItems.map(item => ({
       'Nome do Produto': item.name,
       'Descrição': item.description,
+      'Categoria': item.categoryName || 'Sem categoria',
       'Cadastrado por': item.userName,
       'Quantidade': item.quantity,
       'Data de Cadastro': item.createdAt
@@ -255,6 +275,7 @@ function PainelStock({ username, onLogout }) {
     const columnWidths = [
       { wch: 30 }, // Nome do Produto
       { wch: 40 }, // Descrição
+      { wch: 20 }, // Categoria
       { wch: 20 }, // Cadastrado por
       { wch: 15 }, // Quantidade
       { wch: 15 }, // Data de Cadastro
@@ -485,6 +506,12 @@ function PainelStock({ username, onLogout }) {
                     <span className="sort-icon">{getSortIcon('description')}</span>
                   </div>
                 </th>
+                <th onClick={() => sortItems('categoryName')}>
+                  <div className="th-content">
+                    Categoria
+                    <span className="sort-icon">{getSortIcon('categoryName')}</span>
+                  </div>
+                </th>
                 <th onClick={() => sortItems('userName')}>
                   <div className="th-content">
                     Cadastrado por
@@ -543,6 +570,7 @@ function PainelStock({ username, onLogout }) {
                   >
                     <td>{item.name}</td>
                     <td>{item.description}</td>
+                    <td>{item.categoryName || 'Sem categoria'}</td>
                     <td>{item.userName}</td>
                     <td className="quantity-cell">
                       <div className="quantity-wrapper">
@@ -708,6 +736,24 @@ function PainelStock({ username, onLogout }) {
               ></textarea>
             </div>
             <div className="mb-3">
+              <label htmlFor="categoria" className="form-label">Categoria</label>
+              <select
+                className="form-control custom-input"
+                id="categoryId"
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
               <label htmlFor="quantidade" className="form-label">Quantidade</label>
               <input
                 type="number"
@@ -811,6 +857,24 @@ function PainelStock({ username, onLogout }) {
                 onChange={handleInputChange}
                 required
               ></textarea>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="categoria" className="form-label">Categoria</label>
+              <select
+                className="form-control custom-input"
+                id="categoryId"
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
               <label htmlFor="quantity" className="form-label">Quantidade</label>

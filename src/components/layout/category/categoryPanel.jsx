@@ -166,7 +166,7 @@ function CategoryPanel({ username, onLogout }) {
         // Preparar os dados para exportação
         const dataToExport = filteredCategories.map(category => ({
             'Nome': category.name,
-            'Descrição': category.description || ''
+            'Data de Criação': category.createdAt ? new Date(category.createdAt).toLocaleDateString('pt-BR') : '-'
         }));
 
         // Criar planilha
@@ -175,7 +175,7 @@ function CategoryPanel({ username, onLogout }) {
         // Definir largura das colunas
         const columnWidths = [
             { wch: 30 }, // Nome
-            { wch: 50 }, // Descrição
+            { wch: 20 }, // Data de Criação
         ];
         ws['!cols'] = columnWidths;
 
@@ -324,9 +324,9 @@ function CategoryPanel({ username, onLogout }) {
                                         Nome {getSortIcon('name')}
                                     </div>
                                 </th>
-                                <th onClick={() => sortItems('description')}>
+                                <th onClick={() => sortItems('createdAt')}>
                                     <div className="th-content">
-                                        Descrição {getSortIcon('description')}
+                                        Data de Criação {getSortIcon('createdAt')}
                                     </div>
                                 </th>
                                 <th>
@@ -361,7 +361,7 @@ function CategoryPanel({ username, onLogout }) {
                                 currentCategories.map(category => (
                                     <tr key={category.id} className="category-row">
                                         <td>{category.name}</td>
-                                        <td>{category.description || '-'}</td>
+                                        <td>{category.createdAt ? new Date(category.createdAt).toLocaleDateString('pt-BR') : '-'}</td>
                                         <td>
                                             <div className="action-cell">
                                                 <button className="action-btn edit-btn" onClick={() => handleEdit(category)}>
@@ -462,17 +462,6 @@ function CategoryPanel({ username, onLogout }) {
                                 required
                             />
                         </div>
-                        <div className="mb-3">
-                            <label htmlFor="description" className="form-label">Descrição</label>
-                            <textarea
-                                className="custom-textarea"
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                rows="3"
-                            />
-                        </div>
                         <div className="d-flex justify-content-end mt-4">
                             <Button className="custom-button cancel-button me-2" onClick={() => setShowModal(false)}>
                                 Cancelar
@@ -506,16 +495,6 @@ function CategoryPanel({ username, onLogout }) {
                                     value={currentCategory.name}
                                     onChange={(e) => setCurrentCategory({ ...currentCategory, name: e.target.value })}
                                     required
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Descrição</Form.Label>
-                                <Form.Control
-                                    as="textarea"
-                                    className="custom-textarea"
-                                    rows={3}
-                                    value={currentCategory.description || ''}
-                                    onChange={(e) => setCurrentCategory({ ...currentCategory, description: e.target.value })}
                                 />
                             </Form.Group>
                             <div className="d-flex justify-content-end mt-4">
