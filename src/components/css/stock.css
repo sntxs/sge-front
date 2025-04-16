@@ -147,6 +147,8 @@
 .search-wrapper {
   position: relative;
   width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .search-icon {
@@ -173,6 +175,89 @@
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Filter Dropdown */
+.filter-dropdown-container {
+  position: relative;
+  margin-left: -40px;
+  z-index: 100;
+}
+
+.filter-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-color);
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.filter-button:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 280px;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-color);
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.filter-header {
+  font-weight: 600;
+  color: var(--gray-dark);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-color);
+}
+
+.filter-section {
+  margin-bottom: 1rem;
+}
+
+.filter-title {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: var(--gray-dark);
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.filter-option input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+.filter-option label {
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-color);
+}
+
+.filter-footer button {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
 }
 
 .action-buttons {
@@ -371,35 +456,29 @@
 }
 
 .action-btn {
-  width: 2.2rem;
-  height: 2.2rem;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: all var(--transition-speed);
-  font-size: 0.9rem;
+  transition: all 0.2s;
+  height: 32px;
+  width: 32px;
 }
 
 .edit-btn {
-  background-color: var(--primary-color);
-}
-
-.edit-btn:hover {
-  background-color: var(--primary-dark);
-  box-shadow: var(--shadow-sm);
+  background-color: #4e73df;
+  color: white;
 }
 
 .delete-btn {
-  background-color: var(--danger-color);
+  background-color: #e74a3b;
+  color: white;
 }
 
-.delete-btn:hover {
-  background-color: #dc2626;
-  box-shadow: var(--shadow-sm);
+.stock-table td {
+  vertical-align: middle !important;
 }
 
 /* Loading Spinner */

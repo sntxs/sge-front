@@ -298,10 +298,12 @@ function CategoryPanel({ username, onLogout }) {
                         </div>
                     </div>
                     <div className="action-buttons">
+
                         <button
-                            className="btn btn-category"
+                            className="btn btn-request"
                             onClick={() => setShowModal(true)}
                         >
+                            <FaLayerGroup size={20} className='me-2' />
                             Adicionar Categoria
                         </button>
                         <button
@@ -382,7 +384,7 @@ function CategoryPanel({ username, onLogout }) {
                 {/* Paginação */}
                 <div className="pagination-container">
                     <div className="showing-info">
-                        {filteredCategories.length > 0 ? 
+                        {filteredCategories.length > 0 ?
                             `Mostrando ${indexOfFirstItem + 1} - ${Math.min(indexOfLastItem, filteredCategories.length)} de ${filteredCategories.length} categorias` :
                             "Nenhuma categoria encontrada"
                         }
@@ -475,8 +477,8 @@ function CategoryPanel({ username, onLogout }) {
             </Modal>
 
             {/* Modal de Edição */}
-            <Modal 
-                show={showEditModal} 
+            <Modal
+                show={showEditModal}
                 onHide={() => setShowEditModal(false)}
                 className="custom-modal"
                 centered
@@ -511,8 +513,8 @@ function CategoryPanel({ username, onLogout }) {
             </Modal>
 
             {/* Modal de Confirmação de Deleção */}
-            <Modal 
-                show={showDeleteModal} 
+            <Modal
+                show={showDeleteModal}
                 onHide={() => setShowDeleteModal(false)}
                 className="custom-modal"
                 centered
@@ -535,14 +537,14 @@ function CategoryPanel({ username, onLogout }) {
             </Modal>
 
             {/* Modal de Feedback */}
-            <Modal 
-                show={showFeedbackModal} 
+            <Modal
+                show={showFeedbackModal}
                 onHide={handleCloseFeedback}
                 className="feedback-modal"
                 centered
             >
-                <Modal.Header 
-                    closeButton 
+                <Modal.Header
+                    closeButton
                     className={`modal-custom-header ${feedbackError ? 'error-header' : 'success-header'}`}
                 >
                     <Modal.Title>
@@ -563,8 +565,8 @@ function CategoryPanel({ username, onLogout }) {
                     <p>{feedbackMessage}</p>
                 </Modal.Body>
                 <Modal.Footer className="modal-custom-footer">
-                    <Button 
-                        className={`custom-button ${feedbackError ? 'error-button' : 'success-button'}`} 
+                    <Button
+                        className={`custom-button ${feedbackError ? 'error-button' : 'success-button'}`}
                         onClick={handleCloseFeedback}
                     >
                         Fechar

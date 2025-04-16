@@ -46,6 +46,12 @@ function PainelStock({ username, onLogout }) {
   const [warningStockCount, setWarningStockCount] = useState(0);
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [showWarningStockOnly, setShowWarningStockOnly] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  // Temporary filter states
+  const [tempLowStockOnly, setTempLowStockOnly] = useState(false);
+  const [tempWarningStockOnly, setTempWarningStockOnly] = useState(false);
+  const [tempSelectedCategory, setTempSelectedCategory] = useState('');
 
   // Constantes para os limites de estoque
   const LOW_STOCK_THRESHOLD = 5;
@@ -235,13 +241,15 @@ function PainelStock({ username, onLogout }) {
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === '' || item.categoryId === selectedCategory;
+
     if (showLowStockOnly) {
-      return matchesSearch && item.quantity <= LOW_STOCK_THRESHOLD;
+      return matchesSearch && matchesCategory && item.quantity <= LOW_STOCK_THRESHOLD;
     }
     if (showWarningStockOnly) {
-      return matchesSearch && item.quantity > LOW_STOCK_THRESHOLD && item.quantity <= WARNING_STOCK_THRESHOLD;
+      return matchesSearch && matchesCategory && item.quantity > LOW_STOCK_THRESHOLD && item.quantity <= WARNING_STOCK_THRESHOLD;
     }
-    return matchesSearch;
+    return matchesSearch && matchesCategory;
   });
 
   const getQuantityColorClass = (quantity) => {
@@ -441,6 +449,98 @@ function PainelStock({ username, onLogout }) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <div className="filter-dropdown-container">
+                <button
+                  className="filter-button"
+                  onClick={() => {
+                    // Initialize temp states with current values when opening
+                    if (!showFilterDropdown) {
+                      setTempLowStockOnly(showLowStockOnly);
+                      setTempWarningStockOnly(showWarningStockOnly);
+                      setTempSelectedCategory(selectedCategory);
+                    }
+                    setShowFilterDropdown(!showFilterDropdown);
+                  }}
+                >
+                  <MdFilterList size={20} />
+                </button>
+
+                {showFilterDropdown && (
+                  <div className="filter-dropdown">
+                    <div className="filter-header">Filtrar por:</div>
+
+                    <div className="filter-section">
+                      <div className="filter-title">Estado do Estoque</div>
+                      <div className="filter-option">
+                        <input
+                          type="checkbox"
+                          id="lowStock"
+                          checked={tempLowStockOnly}
+                          onChange={() => {
+                            setTempLowStockOnly(!tempLowStockOnly);
+                            if (!tempLowStockOnly) setTempWarningStockOnly(false);
+                          }}
+                        />
+                        <label htmlFor="lowStock">Estoque Crítico (≤ 5)</label>
+                      </div>
+                      <div className="filter-option">
+                        <input
+                          type="checkbox"
+                          id="warningStock"
+                          checked={tempWarningStockOnly}
+                          onChange={() => {
+                            setTempWarningStockOnly(!tempWarningStockOnly);
+                            if (!tempWarningStockOnly) setTempLowStockOnly(false);
+                          }}
+                        />
+                        <label htmlFor="warningStock">Baixa Quantidade (6-10)</label>
+                      </div>
+                    </div>
+
+                    <div className="filter-section">
+                      <div className="filter-title">Categoria</div>
+                      <select
+                        className="form-control custom-input mt-2"
+                        value={tempSelectedCategory}
+                        onChange={(e) => setTempSelectedCategory(e.target.value)}
+                      >
+                        <option value="">Todas as categorias</option>
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="filter-footer">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => {
+                          setTempLowStockOnly(false);
+                          setTempWarningStockOnly(false);
+                          setTempSelectedCategory('');
+                        }}
+                      >
+                        Limpar Filtros
+                      </button>
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => {
+                          // Apply filters when clicking apply
+                          setShowLowStockOnly(tempLowStockOnly);
+                          setShowWarningStockOnly(tempWarningStockOnly);
+                          setSelectedCategory(tempSelectedCategory);
+                          setShowFilterDropdown(false);
+                          setCurrentPage(1); // Reset to first page when applying filters
+                        }}
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="action-buttons">
@@ -478,15 +578,29 @@ function PainelStock({ username, onLogout }) {
           </div>
         </div>
 
-        {showLowStockOnly && (
+        {(showLowStockOnly || showWarningStockOnly || selectedCategory) && (
           <div className="filter-active-alert mb-3">
-            <Badge bg="danger">Filtro Ativo: Apenas itens com estoque crítico (≤ 5 unidades)</Badge>
-          </div>
-        )}
-
-        {showWarningStockOnly && (
-          <div className="filter-active-alert mb-3">
-            <Badge bg="warning" text="dark">Filtro Ativo: Itens para considerar reposição (6-10 unidades)</Badge>
+            {showLowStockOnly && (
+              <Badge bg="danger" className="me-2">Estoque crítico (≤ 5 unidades)</Badge>
+            )}
+            {showWarningStockOnly && (
+              <Badge bg="warning" text="dark" className="me-2">Baixa quantidade (6-10 unidades)</Badge>
+            )}
+            {selectedCategory && (
+              <Badge bg="primary" className="me-2">
+                Categoria: {categories.find(c => c.id === selectedCategory)?.name || 'Selecionada'}
+              </Badge>
+            )}
+            <button
+              className="btn btn-sm btn-outline-secondary ms-2"
+              onClick={() => {
+                setShowLowStockOnly(false);
+                setShowWarningStockOnly(false);
+                setSelectedCategory('');
+              }}
+            >
+              <MdFilterListOff className="me-1" /> Limpar filtros
+            </button>
           </div>
         )}
 
@@ -531,7 +645,7 @@ function PainelStock({ username, onLogout }) {
                   </div>
                 </th>
                 {localStorage.getItem('isAdmin') === 'true' && (
-                  <th className="text-center">Ações</th>
+                  <th style={{ width: "120px" }} className="text-center">Ações</th>
                 )}
               </tr>
             </thead>
@@ -611,13 +725,15 @@ function PainelStock({ username, onLogout }) {
                     </td>
                     <td>{item.createdAt}</td>
                     {localStorage.getItem('isAdmin') === 'true' && (
-                      <td className="action-cell">
-                        <button className="action-btn edit-btn" onClick={() => handleEdit(item)}>
-                          <FaEdit />
-                        </button>
-                        <button className="action-btn delete-btn" onClick={() => handleDelete(item)}>
-                          <MdDelete />
-                        </button>
+                      <td style={{ verticalAlign: 'middle' }}>
+                        <div className="d-flex justify-content-center">
+                          <button className="action-btn edit-btn mx-1" onClick={() => handleEdit(item)}>
+                            <FaEdit />
+                          </button>
+                          <button className="action-btn delete-btn mx-1" onClick={() => handleDelete(item)}>
+                            <MdDelete />
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>

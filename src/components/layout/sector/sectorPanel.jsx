@@ -208,7 +208,7 @@ function SectorPanel({ username, onLogout }) {
           </div>
           <div className="action-buttons">
             <button
-              className="btn btn-sector"
+              className="btn btn-request"
               onClick={() => setShowModal(true)}
             >
               <FaBuilding className="me-2" /> Adicionar Setor

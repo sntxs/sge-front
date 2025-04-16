@@ -4,9 +4,9 @@ import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import axios from 'axios';
 import SideMenu from '../side-menu';
 import '../../css/requestItem.css';
-import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch, FaBoxOpen } from 'react-icons/fa';
+import { FaEdit, FaSort, FaSortUp, FaSortDown, FaSearch, FaBoxOpen, FaCheck, FaFilter, FaUndo } from 'react-icons/fa';
 import { BsFileEarmarkSpreadsheet } from 'react-icons/bs';
-import { MdDelete, MdInventory } from 'react-icons/md';
+import { MdDelete, MdInventory, MdFilterList } from 'react-icons/md';
 import * as XLSX from 'xlsx';
 import { API_URL_GLOBAL } from '../../../api-config';
 
@@ -30,7 +30,7 @@ const RequestItem = ({ username, onLogout }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
-    const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+    const [sortConfig, setSortConfig] = useState({ key: 'delivered', direction: 'ascending' });
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -38,8 +38,18 @@ const RequestItem = ({ username, onLogout }) => {
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [feedbackError, setFeedbackError] = useState(false);
+    const [showConfirmDeliveryModal, setShowConfirmDeliveryModal] = useState(false);
+    const [itemToDeliver, setItemToDeliver] = useState(null);
+    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'delivered'
+    const [showCancelDeliveryModal, setShowCancelDeliveryModal] = useState(false);
+    const [itemToCancelDelivery, setItemToCancelDelivery] = useState(null);
+    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('');
+    // Temporary filter states
+    const [tempStatusFilter, setTempStatusFilter] = useState('all');
+    const [tempSelectedCategory, setTempSelectedCategory] = useState('');
 
-    // Atualizar o useEffect para buscar itens do estoque
+    // Atualizar o useEffect para ordenar os itens após buscar
     useEffect(() => {
         const fetchStockItems = async () => {
             try {
@@ -68,7 +78,14 @@ const RequestItem = ({ username, onLogout }) => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                setRequestedItems(response.data);
+
+                // Ordena os itens com pendentes primeiro
+                const sortedItems = response.data.sort((a, b) => {
+                    if (a.delivered === b.delivered) return 0;
+                    return a.delivered ? 1 : -1; // Coloca pendentes (false) primeiro
+                });
+
+                setRequestedItems(sortedItems);
             } catch (error) {
                 console.error('Erro ao buscar solicitações:', error);
             } finally {
@@ -164,7 +181,7 @@ const RequestItem = ({ username, onLogout }) => {
             const updatedItems = requestedItems.filter(item => item.id !== itemToDelete.id);
             setRequestedItems(updatedItems);
             setShowDeleteModal(false);
-            
+
             // Mostrar feedback ao usuário
             setFeedbackMessage("Solicitação excluída com sucesso!");
             setFeedbackError(false);
@@ -199,7 +216,7 @@ const RequestItem = ({ username, onLogout }) => {
             );
             setRequestedItems(updatedItems);
             setShowEditModal(false);
-            
+
             // Mostrar feedback ao usuário
             setFeedbackMessage("Solicitação atualizada com sucesso!");
             setFeedbackError(false);
@@ -227,29 +244,6 @@ const RequestItem = ({ username, onLogout }) => {
         }
     };
 
-    const filteredRequestedItems = requestedItems.filter(item =>
-        item.productName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Adicione a função de exportação para Excel
-    const exportToExcel = () => {
-        const dataToExport = filteredRequestedItems.map(item => ({
-            'Produto': item.productName,
-            'Categoria': item.categoryName || 'Sem categoria',
-            'Solicitante': item.userName,
-            'Setor': item.userSector.name,
-            'Quantidade': item.quantity,
-            'Data de Solicitação': formatDate(item.createdAt)
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Solicitações");
-
-        const fileName = `solicitacoes_${new Date().toLocaleDateString()}.xlsx`;
-        XLSX.writeFile(wb, fileName);
-    };
-
     // Adicione a função de ordenação
     const sortItems = (key) => {
         let direction = 'ascending';
@@ -259,6 +253,18 @@ const RequestItem = ({ username, onLogout }) => {
         setSortConfig({ key, direction });
 
         const sortedItems = [...requestedItems].sort((a, b) => {
+            // Ordenação especial para o campo 'delivered'
+            if (key === 'delivered') {
+                if (direction === 'ascending') {
+                    // Pendentes primeiro, depois entregues
+                    return a.delivered === b.delivered ? 0 : a.delivered ? 1 : -1;
+                } else {
+                    // Entregues primeiro, depois pendentes
+                    return a.delivered === b.delivered ? 0 : a.delivered ? -1 : 1;
+                }
+            }
+
+            // Ordenação padrão para outros campos
             if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
             if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
             return 0;
@@ -271,16 +277,91 @@ const RequestItem = ({ username, onLogout }) => {
         return sortConfig.direction === 'ascending' ? <FaSortUp /> : <FaSortDown />;
     };
 
-    // Lógica de paginação
+    // Função para filtrar por status
+    const handleStatusFilterChange = (status) => {
+        setStatusFilter(status);
+        setCurrentPage(1); // Resetar para a primeira página ao mudar o filtro
+    };
+
+    // First, let's create a function to get unique categories with IDs from stock items
+    const getUniqueCategories = () => {
+        const uniqueCategories = [];
+        const categoryIds = new Set();
+
+        stockItems.forEach(item => {
+            if (item.categoryId && !categoryIds.has(item.categoryId)) {
+                categoryIds.add(item.categoryId);
+                uniqueCategories.push({
+                    id: item.categoryId,
+                    name: item.categoryName || 'Sem categoria'
+                });
+            }
+        });
+
+        return uniqueCategories;
+    };
+
+    // Update applyFilters to correctly handle categoryId
+    const applyFilters = () => {
+        let filtered = [...requestedItems];
+
+        // Filtrar por nome de produto
+        if (searchTerm) {
+            filtered = filtered.filter(item =>
+                item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Filtrar por status
+        if (statusFilter !== 'all') {
+            const isDelivered = statusFilter === 'delivered';
+            filtered = filtered.filter(item => item.delivered === isDelivered);
+        }
+
+        // Filtrar por categoria
+        if (selectedCategory) {
+            filtered = filtered.filter(item =>
+                item.categoryId === selectedCategory ||
+                item.categoryName === selectedCategory
+            );
+        }
+
+        return filtered;
+    };
+
+    // Função de exportação para Excel
+    const exportToExcel = () => {
+        const filteredItems = applyFilters();
+        const dataToExport = filteredItems.map(item => ({
+            'Produto': item.productName,
+            'Categoria': item.categoryName || 'Sem categoria',
+            'Solicitante': item.userName,
+            'Setor': item.userSector.name,
+            'Quantidade': item.quantity,
+            'Status': item.delivered ? 'Entregue' : 'Pendente',
+            'Data de Solicitação': formatDate(item.createdAt),
+            'Data de Entrega': item.delivered ? formatDate(item.deliveredAt) : 'N/A'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Solicitações");
+
+        const fileName = `solicitacoes_${new Date().toLocaleDateString()}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    };
+
+    // Lógica de paginação com filtros aplicados
+    const filteredItems = applyFilters();
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredRequestedItems.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredRequestedItems.length / itemsPerPage);
+    const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
     const handleCloseModal = () => {
         window.location.reload(); // Recarregar a página
     };
-    
+
     const handleCloseFeedback = () => {
         setShowFeedbackModal(false);
         if (!feedbackError) {
@@ -305,6 +386,94 @@ const RequestItem = ({ username, onLogout }) => {
         }
     };
 
+    // Função para lidar com a confirmação de entrega
+    const handleConfirmDelivery = (item) => {
+        setItemToDeliver(item);
+        setShowConfirmDeliveryModal(true);
+    };
+
+    // Função para processar a entrega
+    const processDelivery = async () => {
+        try {
+            // Chamada para a API para finalizar a solicitação e dar baixa no estoque
+            const response = await axios.put(`${API_URL_GLOBAL}/ProductRequest/${itemToDeliver.id}/deliver`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            // Atualizar o estado local após a entrega
+            await reloadRequests();
+            setShowConfirmDeliveryModal(false);
+
+            // Mostrar feedback ao usuário
+            setFeedbackMessage("Entrega confirmada com sucesso!");
+            setFeedbackError(false);
+            setShowFeedbackModal(true);
+        } catch (error) {
+            console.error('Erro ao confirmar entrega:', error);
+
+            // Capturar mensagem de erro do backend
+            let errorMsg = "Erro ao confirmar entrega. Por favor, tente novamente.";
+            if (error.response && error.response.data) {
+                if (typeof error.response.data === 'string') {
+                    errorMsg = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            }
+
+            setFeedbackMessage(errorMsg);
+            setFeedbackError(true);
+            setShowFeedbackModal(true);
+            setShowConfirmDeliveryModal(false);
+        }
+    };
+
+    // Função para lidar com o cancelamento de entrega
+    const handleCancelDelivery = (item) => {
+        setItemToCancelDelivery(item);
+        setShowCancelDeliveryModal(true);
+    };
+
+    // Função para processar o cancelamento da entrega
+    const processCancelDelivery = async () => {
+        try {
+            // Chamada para a API para cancelar a entrega e retornar os itens ao estoque
+            const response = await axios.put(`${API_URL_GLOBAL}/ProductRequest/${itemToCancelDelivery.id}/cancel-delivery`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            // Atualizar o estado local após o cancelamento
+            await reloadRequests();
+            setShowCancelDeliveryModal(false);
+
+            // Mostrar feedback ao usuário
+            setFeedbackMessage("Entrega cancelada com sucesso!");
+            setFeedbackError(false);
+            setShowFeedbackModal(true);
+        } catch (error) {
+            console.error('Erro ao cancelar entrega:', error);
+
+            // Capturar mensagem de erro do backend
+            let errorMsg = "Erro ao cancelar entrega. Por favor, tente novamente.";
+            if (error.response && error.response.data) {
+                if (typeof error.response.data === 'string') {
+                    errorMsg = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            }
+
+            setFeedbackMessage(errorMsg);
+            setFeedbackError(true);
+            setShowFeedbackModal(true);
+            setShowCancelDeliveryModal(false);
+        }
+    };
+
     return (
         <div className="request-container">
             <SideMenu username={username} onLogout={onLogout} />
@@ -322,39 +491,164 @@ const RequestItem = ({ username, onLogout }) => {
                 </div>
 
                 <div className="control-panel">
-                    <div className="search-container">
-                        <div className="search-wrapper">
-                            <FaSearch className="search-icon" />
-                            <input
-                                type="text"
-                                className="search-input"
-                                placeholder="Buscar solicitação..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                    <div className="search-and-filter">
+                        <div className="search-container">
+                            <div className="search-wrapper">
+                                <FaSearch className="search-icon" />
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Buscar solicitação..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <div className="filter-dropdown-container">
+                                    <button
+                                        className="filter-button"
+                                        onClick={() => {
+                                            // Initialize temp states with current values when opening
+                                            if (!showFilterDropdown) {
+                                                setTempStatusFilter(statusFilter);
+                                                setTempSelectedCategory(selectedCategory);
+                                            }
+                                            setShowFilterDropdown(!showFilterDropdown);
+                                        }}
+                                    >
+                                        <MdFilterList size={20} />
+                                    </button>
+
+                                    {showFilterDropdown && (
+                                        <div className="filter-dropdown">
+                                            <div className="filter-header">Filtrar por:</div>
+
+                                            <div className="filter-section">
+                                                <div className="filter-title">Status do Pedido</div>
+                                                <div className="filter-option">
+                                                    <input
+                                                        type="radio"
+                                                        id="statusAll"
+                                                        name="statusFilter"
+                                                        checked={tempStatusFilter === 'all'}
+                                                        onChange={() => setTempStatusFilter('all')}
+                                                    />
+                                                    <label htmlFor="statusAll">Todos</label>
+                                                </div>
+                                                <div className="filter-option">
+                                                    <input
+                                                        type="radio"
+                                                        id="statusPending"
+                                                        name="statusFilter"
+                                                        checked={tempStatusFilter === 'pending'}
+                                                        onChange={() => setTempStatusFilter('pending')}
+                                                    />
+                                                    <label htmlFor="statusPending">Pendentes</label>
+                                                </div>
+                                                <div className="filter-option">
+                                                    <input
+                                                        type="radio"
+                                                        id="statusDelivered"
+                                                        name="statusFilter"
+                                                        checked={tempStatusFilter === 'delivered'}
+                                                        onChange={() => setTempStatusFilter('delivered')}
+                                                    />
+                                                    <label htmlFor="statusDelivered">Entregues</label>
+                                                </div>
+                                            </div>
+
+                                            <div className="filter-section">
+                                                <div className="filter-title">Categoria</div>
+                                                <select
+                                                    className="form-control custom-input mt-2"
+                                                    value={tempSelectedCategory}
+                                                    onChange={(e) => setTempSelectedCategory(e.target.value)}
+                                                >
+                                                    <option value="">Todas as categorias</option>
+                                                    {getUniqueCategories().map(category => (
+                                                        <option key={category.id} value={category.id}>
+                                                            {category.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="filter-footer">
+                                                <button
+                                                    className="btn btn-sm btn-outline-secondary"
+                                                    onClick={() => {
+                                                        setTempStatusFilter('all');
+                                                        setTempSelectedCategory('');
+                                                    }}
+                                                >
+                                                    Limpar Filtros
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-primary"
+                                                    onClick={() => {
+                                                        // Apply filters when clicking apply
+                                                        setStatusFilter(tempStatusFilter);
+                                                        setSelectedCategory(tempSelectedCategory);
+                                                        setShowFilterDropdown(false);
+                                                        setCurrentPage(1); // Reset to first page when applying filters
+                                                    }}
+                                                >
+                                                    Aplicar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="action-buttons">
-                        <button
-                            className="btn btn-request"
-                            onClick={() => setShowModal(true)}
-                        >
-                            <FaBoxOpen className='me-2' />
-                            Solicitar Produto
-                        </button>
-                        <button
-                            className="btn btn-outline-primary"
-                            onClick={() => navigate('/stock-panel')}
-                        >
-                            Painel de Estoque
-                        </button>
-                        <button
-                            className="btn btn-rel"
-                            onClick={exportToExcel}
-                        >
-                            <BsFileEarmarkSpreadsheet className='me-2' />
-                            Relatório
-                        </button>
+                    <div className="filters-actions-container">
+                        <div className="filters-wrapper">
+                            {(statusFilter !== 'all' || selectedCategory) && (
+                                <div className="filter-active-alert">
+                                    {statusFilter === 'pending' && (
+                                        <span className="status-badge pending me-2">Pendentes</span>
+                                    )}
+                                    {statusFilter === 'delivered' && (
+                                        <span className="status-badge delivered me-2">Entregues</span>
+                                    )}
+                                    {selectedCategory && (
+                                        <span className="category-badge me-2">
+                                            Categoria: {getUniqueCategories().find(c => c.id === selectedCategory)?.name || selectedCategory}
+                                        </span>
+                                    )}
+                                    <button
+                                        className="btn btn-sm btn-outline-secondary ms-2"
+                                        onClick={() => {
+                                            setStatusFilter('all');
+                                            setSelectedCategory('');
+                                        }}
+                                    >
+                                        <FaFilter className="me-1" /> Limpar filtros
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="action-buttons">
+                            <button
+                                className="btn btn-request"
+                                onClick={() => setShowModal(true)}
+                            >
+                                <FaBoxOpen className='me-2' />
+                                Solicitar Produto
+                            </button>
+                            <button
+                                className="btn btn-outline-primary"
+                                onClick={() => navigate('/stock-panel')}
+                            >
+                                Painel de Estoque
+                            </button>
+                            <button
+                                className="btn btn-rel"
+                                onClick={exportToExcel}
+                            >
+                                <BsFileEarmarkSpreadsheet className='me-2' />
+                                Relatório
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -394,8 +688,20 @@ const RequestItem = ({ username, onLogout }) => {
                                 </th>
                                 <th onClick={() => sortItems('createdAt')}>
                                     <div className="th-content">
-                                        Data
+                                        Data de Solicitação
                                         <span className="sort-icon">{getSortIcon('createdAt')}</span>
+                                    </div>
+                                </th>
+                                <th onClick={() => sortItems('status')}>
+                                    <div className="th-content">
+                                        Status
+                                        <span className="sort-icon">{getSortIcon('status')}</span>
+                                    </div>
+                                </th>
+                                <th onClick={() => sortItems('deliveredAt')}>
+                                    <div className="th-content">
+                                        Data de Entrega
+                                        <span className="sort-icon">{getSortIcon('deliveredAt')}</span>
                                     </div>
                                 </th>
                                 {localStorage.getItem('isAdmin') === 'true' && (
@@ -406,7 +712,7 @@ const RequestItem = ({ username, onLogout }) => {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 7 : 6} className="text-center py-4">
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 9 : 8} className="text-center py-4">
                                         <div className="spinner">
                                             <div className="bounce1"></div>
                                             <div className="bounce2"></div>
@@ -417,7 +723,7 @@ const RequestItem = ({ username, onLogout }) => {
                                 </tr>
                             ) : currentItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 7 : 6} className="text-center py-4">
+                                    <td colSpan={localStorage.getItem('isAdmin') === 'true' ? 9 : 8} className="text-center py-4">
                                         <div className="empty-state">
                                             <MdInventory size={48} className="empty-icon" />
                                             <p className="mb-0">Nenhuma solicitação encontrada.</p>
@@ -433,8 +739,41 @@ const RequestItem = ({ username, onLogout }) => {
                                         <td>{item.userSector.name}</td>
                                         <td>{item.quantity}</td>
                                         <td>{formatDate(item.createdAt)}</td>
+                                        <td>
+                                            <span className={`status-badge ${item.delivered ? 'delivered' : 'pending'}`}>
+                                                {item.delivered ? 'Entregue' : 'Pendente'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {item.delivered ? formatDate(item.deliveredAt) : '-'}
+                                        </td>
                                         {localStorage.getItem('isAdmin') === 'true' && (
                                             <td className="action-cell">
+                                                {!item.delivered ? (
+                                                    <OverlayTrigger
+                                                        placement="top"
+                                                        overlay={<Tooltip>Confirmar Entrega</Tooltip>}
+                                                    >
+                                                        <button
+                                                            className="action-btn confirm-btn"
+                                                            onClick={() => handleConfirmDelivery(item)}
+                                                        >
+                                                            <FaCheck />
+                                                        </button>
+                                                    </OverlayTrigger>
+                                                ) : (
+                                                    <OverlayTrigger
+                                                        placement="top"
+                                                        overlay={<Tooltip>Cancelar Entrega</Tooltip>}
+                                                    >
+                                                        <button
+                                                            className="action-btn cancel-delivery-btn"
+                                                            onClick={() => handleCancelDelivery(item)}
+                                                        >
+                                                            <FaUndo />
+                                                        </button>
+                                                    </OverlayTrigger>
+                                                )}
                                                 <button className="action-btn edit-btn" onClick={() => handleEdit(item)}>
                                                     <FaEdit />
                                                 </button>
@@ -452,13 +791,13 @@ const RequestItem = ({ username, onLogout }) => {
 
                 <div className="pagination-container">
                     <div className="showing-info">
-                        {filteredRequestedItems.length > 0 ? (
-                            <>Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredRequestedItems.length)} de {filteredRequestedItems.length} solicitações</>
+                        {filteredItems.length > 0 ? (
+                            <>Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredItems.length)} de {filteredItems.length} solicitações</>
                         ) : (
                             <span>Nenhuma solicitação encontrada</span>
                         )}
                     </div>
-                    {filteredRequestedItems.length > 0 && (
+                    {filteredItems.length > 0 && (
                         <nav>
                             <ul className="custom-pagination">
                                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
@@ -719,6 +1058,86 @@ const RequestItem = ({ username, onLogout }) => {
                             className={`custom-button ${feedbackError ? 'error-button' : 'success-button'}`}
                         >
                             Fechar
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                {/* Modal de Confirmação de Entrega */}
+                <Modal
+                    show={showConfirmDeliveryModal}
+                    onHide={() => setShowConfirmDeliveryModal(false)}
+                    centered
+                    className="confirmation-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header">
+                        <Modal.Title>
+                            <FaCheck className="me-2" />
+                            Confirmar Entrega
+                        </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="modal-custom-body">
+                        <div className="text-center mb-3">
+                            <div className="confirm-icon-container">
+                                <FaCheck size={40} />
+                            </div>
+                        </div>
+                        {itemToDeliver && (
+                            <div>
+                                <p className="text-center">
+                                    Confirmar entrega do produto <strong>{itemToDeliver.productName}</strong> para o setor <strong>{itemToDeliver.userSector.name}</strong>?
+                                </p>
+                                <p className="text-center text-warning">
+                                    <strong>Atenção:</strong> Esta ação dará baixa de <strong>{itemToDeliver.quantity}</strong> unidades no estoque.
+                                </p>
+                            </div>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="secondary" onClick={() => setShowConfirmDeliveryModal(false)} className="custom-button cancel-button">
+                            Cancelar
+                        </Button>
+                        <Button variant="success" onClick={processDelivery} className="custom-button confirm-button">
+                            Confirmar Entrega
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                {/* Modal de Cancelamento de Entrega */}
+                <Modal
+                    show={showCancelDeliveryModal}
+                    onHide={() => setShowCancelDeliveryModal(false)}
+                    centered
+                    className="confirmation-modal"
+                >
+                    <Modal.Header closeButton className="modal-custom-header cancel-delivery-header">
+                        <Modal.Title>
+                            <FaUndo className="me-2" />
+                            Cancelar Entrega
+                        </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="modal-custom-body">
+                        <div className="text-center mb-3">
+                            <div className="cancel-delivery-icon-container">
+                                <FaUndo size={40} />
+                            </div>
+                        </div>
+                        {itemToCancelDelivery && (
+                            <div>
+                                <p className="text-center">
+                                    Cancelar a entrega do produto <strong>{itemToCancelDelivery.productName}</strong>?
+                                </p>
+                                <p className="text-center text-warning">
+                                    <strong>Atenção:</strong> Esta ação retornará <strong>{itemToCancelDelivery.quantity}</strong> unidades ao estoque e marcará a solicitação como pendente novamente.
+                                </p>
+                            </div>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer className="modal-custom-footer">
+                        <Button variant="secondary" onClick={() => setShowCancelDeliveryModal(false)} className="custom-button cancel-button">
+                            Cancelar
+                        </Button>
+                        <Button variant="warning" onClick={processCancelDelivery} className="custom-button cancel-delivery-button">
+                            Reverter Entrega
                         </Button>
                     </Modal.Footer>
                 </Modal>
