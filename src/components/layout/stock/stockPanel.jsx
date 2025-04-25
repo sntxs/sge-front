@@ -165,6 +165,15 @@ function PainelStock({ username, onLogout }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validar quantidade para que seja sempre um número positivo maior que zero
+    if (name === 'quantity') {
+      const numValue = parseInt(value);
+      if (numValue < 1) {
+        return; // Não atualiza o state se for menor que 1
+      }
+    }
+    
     setFormData(prevState => ({
       ...prevState,
       [name]: value
@@ -689,12 +698,22 @@ function PainelStock({ username, onLogout }) {
                     <td className="quantity-cell">
                       <div className="quantity-wrapper">
                         <span className="quantity-badge">
-                          {item.quantity}
+                          {item.quantity > 0 ? item.quantity : "Sem estoque"}
                         </span>
-                        {item.quantity <= LOW_STOCK_THRESHOLD && (
+                        {item.quantity <= LOW_STOCK_THRESHOLD && item.quantity > 0 && (
                           <OverlayTrigger
                             placement="top"
                             overlay={<Tooltip>Estoque crítico! Necessita reposição urgente.</Tooltip>}
+                          >
+                            <div className="stock-indicator critical-indicator">
+                              <MdWarning />
+                            </div>
+                          </OverlayTrigger>
+                        )}
+                        {item.quantity === 0 && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={<Tooltip>Produto esgotado!</Tooltip>}
                           >
                             <div className="stock-indicator critical-indicator">
                               <MdWarning />
@@ -877,6 +896,18 @@ function PainelStock({ username, onLogout }) {
                 id="quantity"
                 name="quantity"
                 value={formData.quantity}
+                min="1"
+                step="1"
+                onKeyDown={(e) => {
+                  // Bloqueia a entrada do número zero
+                  if (e.key === '0' && e.target.value === '') {
+                    e.preventDefault();
+                  }
+                  // Bloqueia a entrada de sinal negativo
+                  if (e.key === '-' || e.key === 'e') {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={handleInputChange}
                 required
               />
@@ -1000,6 +1031,18 @@ function PainelStock({ username, onLogout }) {
                 id="quantity"
                 name="quantity"
                 value={formData.quantity}
+                min="1"
+                step="1"
+                onKeyDown={(e) => {
+                  // Bloqueia a entrada do número zero
+                  if (e.key === '0' && e.target.value === '') {
+                    e.preventDefault();
+                  }
+                  // Bloqueia a entrada de sinal negativo
+                  if (e.key === '-' || e.key === 'e') {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={handleInputChange}
                 required
               />

@@ -279,13 +279,13 @@ function Home({ username, onLogout }) {
                 {/* Stock List Card */}
                 <div className="stock-list-card">
                     <div className="card-header">
-                        <h5 className="p-3 d-flex align-items-center">
-                            <FaClipboardList className="me-2" />
+                        <h5 className="p-4 d-flex align-items-center text-white rounded">
+                            <FaClipboardList className="me-3" size={24} />
                             {showLowStockOnly
                                 ? "Itens com Estoque Crítico"
                                 : showWarningStockOnly
                                     ? "Itens para Reposição em Breve"
-                                    : "Visão Geral do Estoque"}
+                                    : "Produtos em Estoque"}
                         </h5>
                     </div>
                     <div className="card-body">

@@ -423,6 +423,16 @@
   color: var(--primary-color);
 }
 
+/* Estilo para produto sem estoque */
+.quantity-badge:has(+ .critical-indicator + .critical-indicator),
+.quantity-badge:has(+ .critical-indicator) {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--danger-color);
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+}
+
 .stock-indicator {
   display: flex;
   align-items: center;
@@ -485,34 +495,57 @@
 .spinner {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  align-items: center;
+  margin: 30px 0;
 }
 
-.spinner>div {
-  width: 10px;
-  height: 10px;
-  background-color: var(--primary-color);
-  border-radius: 100%;
-  display: inline-block;
-  animation: bounce 1.4s infinite ease-in-out both;
+.spinner > div {
+  display: none; /* Hide the dots */
 }
 
-.spinner .bounce1 {
-  animation-delay: -0.32s;
+/* Circular loading spinner */
+.spinner::before {
+  content: "";
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #ccc;
+  border-top-color: var(--primary-color);
+  animation: spinner 0.8s linear infinite;
 }
 
-.spinner .bounce2 {
-  animation-delay: -0.16s;
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Keep these for backwards compatibility */
+@keyframes dotPulse {
+  0%, 80%, 100% { 
+    transform: translateY(0);
+    background-color: var(--primary-color);
+  }
+  40% { 
+    transform: translateY(-20px);
+    background-color: var(--primary-light);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
 }
 
 @keyframes bounce {
-
-  0%,
-  80%,
-  100% {
+  0%, 80%, 100% {
     transform: scale(0);
   }
-
   40% {
     transform: scale(1.0);
   }

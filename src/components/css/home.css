@@ -189,14 +189,14 @@
 }
 
 .card-header {
-  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  background: linear-gradient(135deg, #4188F7 0%, #5CA1F9 100%) !important;
   color: white;
   padding: 1.25rem 1.5rem;
   font-weight: 600;
 }
 
 .card-header h5 {
-  color: #FFF !important;
+  color: #ffffff !important;
 }
 
 .card-body {
