@@ -19,7 +19,7 @@ function SideMenu({ username, onLogout }) {
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const userTitle = isAdmin ? 'Administrador' : 'Usuário';
     const [sector, setSector] = useState({ name: 'Carregando...' });
-    
+
     useEffect(() => {
         const fetchUserSector = async () => {
             try {
@@ -30,7 +30,7 @@ function SideMenu({ username, onLogout }) {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`
                         }
                     });
-                    
+
                     if (response.data && response.data.sector) {
                         setSector(response.data.sector);
                     } else {
@@ -42,7 +42,7 @@ function SideMenu({ username, onLogout }) {
                 setSector({ name: 'Erro ao carregar' });
             }
         };
-        
+
         fetchUserSector();
     }, []);
 
@@ -139,8 +139,8 @@ function SideMenu({ username, onLogout }) {
             icon: <MdInventory size={20} />,
             type: 'submenu',
             submenu: [
-                { title: 'Solicitar Item', link: '/request-item' },
-                { title: 'Painel do Estoque', link: '/stock-panel' }
+                { title: 'Painel do Estoque', link: '/stock-panel' },
+                { title: 'Solicitar Item', link: '/request-item' }
             ]
         },
         {

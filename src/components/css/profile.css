@@ -200,17 +200,17 @@
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    background: rgba(255, 255, 255, 0.1);
+.infoSistemas,
+.infoPessoais {
+    background: linear-gradient(135deg, #4188F7 0%, #5CA1F9 100%) !important;
+    color: white !important;
+    padding: 15px !important;
+    font-weight: 600 !important;
 }
 
-.card-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-dark);
+.infoSistemas,
+.infoPessoais h5 {
+    color: #ffffff !important;
 }
 
 .card-content {

@@ -164,7 +164,7 @@ function Profile({ username, onLogout }) {
                     <div className="profile-cards-container">
                         {/* Personal Info Card */}
                         <div className="glass-card">
-                            <div className="card-header">
+                            <div className="card-header infoPessoais rounded">
                                 <h2>Informações Pessoais</h2>
                             </div>
                             <div className="card-content">
@@ -212,7 +212,7 @@ function Profile({ username, onLogout }) {
 
                         {/* System Info Card */}
                         <div className="glass-card">
-                            <div className="card-header">
+                            <div className="card-header infoSistemas rounded">
                                 <h2>Informações do Sistema</h2>
                             </div>
                             <div className="card-content">
