@@ -54,8 +54,27 @@ function UsersPanel({ username, onLogout }) {
     }));
   };
 
+  // Validação de senha
+  const passwordRules = [
+    {
+      label: 'Ter entre 6 e 12 caracteres',
+      test: (pw) => pw.length >= 6 && pw.length <= 12
+    },
+    {
+      label: 'Conter pelo menos um número',
+      test: (pw) => /[0-9]/.test(pw)
+    }
+  ];
+
+  const isPasswordValid = passwordRules.every(rule => rule.test(formData.password));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isPasswordValid) {
+      setErrorMessage('A senha não atende aos requisitos. Verifique as regras e tente novamente.');
+      setShowErrorModal(true);
+      return;
+    }
     try {
       // Remover máscaras do CPF e telefone
       const cleanCPF = formData.cpf.replace(/\D/g, '');
@@ -565,6 +584,14 @@ function UsersPanel({ username, onLogout }) {
                     {formData.showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                <ul className="password-rules-list mt-2" style={{ listStyle: 'none', paddingLeft: 0 }}>
+                  {passwordRules.map((rule, idx) => (
+                    <li key={idx} style={{ color: rule.test(formData.password) ? 'green' : 'red', fontSize: '0.95em' }}>
+                      {rule.test(formData.password) ? '✓' : '✗'} {rule.label}
+                    </li>
+                  ))}
+                </ul>
+                <small className="text-muted">A senha deve atender a todos os requisitos acima.</small>
               </div>
               <div className="mb-3">
                 <label htmlFor="sectorId" className="form-label">Setor</label>

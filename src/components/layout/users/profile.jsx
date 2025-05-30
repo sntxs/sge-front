@@ -324,6 +324,11 @@ function Profile({ username, onLogout }) {
                                         {passwordData.showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                                     </button>
                                 </div>
+                                {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
+                                    <div style={{ color: 'red', fontSize: '0.95em', marginTop: '0.25rem' }}>
+                                        As senhas não coincidem
+                                    </div>
+                                )}
                             </Form.Group>
 
                             <div className="password-requirements">
