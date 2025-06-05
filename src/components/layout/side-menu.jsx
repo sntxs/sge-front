@@ -6,10 +6,11 @@ import { TbCategoryPlus } from "react-icons/tb";
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL_GLOBAL } from '../../api-config.jsx';
+import PropTypes from 'prop-types';
 
 import '../css/side-menu.css';
 
-function SideMenu({ username, onLogout }) {
+function SideMenu({ onLogout }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [activeSubmenu, setActiveSubmenu] = useState(null);
     const [menuItemPositions, setMenuItemPositions] = useState({});
@@ -19,6 +20,7 @@ function SideMenu({ username, onLogout }) {
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const userTitle = isAdmin ? 'Administrador' : 'Usuário';
     const [sector, setSector] = useState({ name: 'Carregando...' });
+    const [userName, setUserName] = useState('Carregando...');
 
     useEffect(() => {
         const fetchUserSector = async () => {
@@ -31,15 +33,18 @@ function SideMenu({ username, onLogout }) {
                         }
                     });
 
-                    if (response.data && response.data.sector) {
-                        setSector(response.data.sector);
+                    if (response.data) {
+                        setSector(response.data.sector || { name: 'Não atribuído' });
+                        setUserName(response.data.name || 'Sem nome');
                     } else {
                         setSector({ name: 'Não atribuído' });
+                        setUserName('Sem nome');
                     }
                 }
             } catch (error) {
                 console.error('Erro ao buscar setor do usuário:', error);
                 setSector({ name: 'Erro ao carregar' });
+                setUserName('Erro ao carregar');
             }
         };
 
@@ -195,7 +200,7 @@ function SideMenu({ username, onLogout }) {
 
                         {menuOpen && (
                             <div className="user-info">
-                                <span className="username">{username}</span>
+                                <span className="username">{userName}</span>
                                 <span className="user-role">Cargo: {userTitle}</span>
                                 <span className="user-role">Setor: {sector.name}</span>
                             </div>
@@ -295,5 +300,9 @@ function SideMenu({ username, onLogout }) {
         </>
     );
 }
+
+SideMenu.propTypes = {
+    onLogout: PropTypes.func.isRequired
+};
 
 export default SideMenu;

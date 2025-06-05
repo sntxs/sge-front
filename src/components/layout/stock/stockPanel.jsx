@@ -48,7 +48,7 @@ function PainelStock({ username, onLogout }) {
   const [showWarningStockOnly, setShowWarningStockOnly] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
-  // Temporary filter states
+  // Estados de filtro temporários
   const [tempLowStockOnly, setTempLowStockOnly] = useState(false);
   const [tempWarningStockOnly, setTempWarningStockOnly] = useState(false);
   const [tempSelectedCategory, setTempSelectedCategory] = useState('');
@@ -165,7 +165,7 @@ function PainelStock({ username, onLogout }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Validar quantidade para que seja sempre um número positivo maior que zero
     if (name === 'quantity') {
       const numValue = parseInt(value);
@@ -173,7 +173,7 @@ function PainelStock({ username, onLogout }) {
         return; // Não atualiza o state se for menor que 1
       }
     }
-    
+
     setFormData(prevState => ({
       ...prevState,
       [name]: value
@@ -462,7 +462,7 @@ function PainelStock({ username, onLogout }) {
                 <button
                   className="filter-button"
                   onClick={() => {
-                    // Initialize temp states with current values when opening
+                    // Inicializar estados temporários com valores atuais ao abrir
                     if (!showFilterDropdown) {
                       setTempLowStockOnly(showLowStockOnly);
                       setTempWarningStockOnly(showWarningStockOnly);
@@ -536,12 +536,12 @@ function PainelStock({ username, onLogout }) {
                       <button
                         className="btn btn-sm btn-primary"
                         onClick={() => {
-                          // Apply filters when clicking apply
+                          // Aplicar filtros ao clicar em aplicar
                           setShowLowStockOnly(tempLowStockOnly);
                           setShowWarningStockOnly(tempWarningStockOnly);
                           setSelectedCategory(tempSelectedCategory);
                           setShowFilterDropdown(false);
-                          setCurrentPage(1); // Reset to first page when applying filters
+                          setCurrentPage(1); // Redefinir para a primeira página ao aplicar filtros
                         }}
                       >
                         Aplicar
@@ -561,13 +561,6 @@ function PainelStock({ username, onLogout }) {
                 <FaListUl className="me-1" /> Todos os Itens
               </button>
             )}
-            <button
-              className="btn btn-request btn-outline-primary"
-              onClick={() => navigate('/request-item')}
-            >
-              <FaBoxOpen className='me-2 ' />
-              Solicitar Item
-            </button>
             {localStorage.getItem('isAdmin') === 'true' && (
               <button
                 className="btn btn-add"
@@ -577,6 +570,13 @@ function PainelStock({ username, onLogout }) {
                 Adicionar Item
               </button>
             )}
+            <button
+              className="btn btn-request btn-outline-primary"
+              onClick={() => navigate('/request-item')}
+            >
+              <FaBoxOpen className='me-2 ' />
+              Solicitar Item
+            </button>
             <button
               className="btn btn-rel"
               onClick={exportToExcel}
@@ -691,10 +691,10 @@ function PainelStock({ username, onLogout }) {
                     key={index}
                     className={`stock-row ${getQuantityColorClass(item.quantity)} ${getRowHighlightClass(item.quantity)}`}
                   >
-                    <td>{item.name}</td>
-                    <td>{item.description}</td>
-                    <td>{item.categoryName || 'Sem categoria'}</td>
-                    <td>{item.userName}</td>
+                    <td className="text-center">{item.name}</td>
+                    <td className="text-center">{item.description}</td>
+                    <td className="text-center">{item.categoryName || 'Sem categoria'}</td>
+                    <td className="text-center">{item.userName}</td>
                     <td className="quantity-cell">
                       <div className="quantity-wrapper">
                         <span className="quantity-badge">
@@ -742,7 +742,7 @@ function PainelStock({ username, onLogout }) {
                         )}
                       </div>
                     </td>
-                    <td>{item.createdAt}</td>
+                    <td className="text-center">{item.createdAt}</td>
                     {localStorage.getItem('isAdmin') === 'true' && (
                       <td style={{ verticalAlign: 'middle' }}>
                         <div className="d-flex justify-content-center">

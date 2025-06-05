@@ -17,8 +17,9 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 const LOW_STOCK_THRESHOLD = 5;
 const WARNING_STOCK_THRESHOLD = 10;
 
-function Home({ username, onLogout }) {
+function Home({ onLogout }) {
     const navigate = useNavigate();
+    const [userName, setUserName] = useState('Carregando...');
     const [stockItems, setStockItems] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(5); // Definindo 5 itens por página no card
@@ -30,6 +31,29 @@ function Home({ username, onLogout }) {
     const [isLoading, setIsLoading] = useState(true);
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
     const [showWarningStockOnly, setShowWarningStockOnly] = useState(false);
+
+    useEffect(() => {
+        const fetchUserName = async () => {
+            try {
+                const userId = localStorage.getItem('id');
+                if (userId) {
+                    const response = await axios.get(`${API_URL_GLOBAL}/User/${userId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (response.data && response.data.name) {
+                        setUserName(response.data.name);
+                    } else {
+                        setUserName('Sem nome');
+                    }
+                }
+            } catch {
+                setUserName('Erro ao carregar');
+            }
+        };
+        fetchUserName();
+    }, []);
 
     useEffect(() => {
         const fetchItems = async () => {
@@ -221,7 +245,7 @@ function Home({ username, onLogout }) {
 
     return (
         <div className="dashboard-container">
-            <SideMenu username={username} onLogout={onLogout} />
+            <SideMenu username={userName} onLogout={onLogout} />
             <div className="dashboard-content">
                 {/* Header Card */}
                 <div className="header-card">
@@ -231,7 +255,7 @@ function Home({ username, onLogout }) {
                         </div>
                         <div className="header-text">
                             <h1>Dashboard de Estoque</h1>
-                            <p>Olá, {username}! Bem-vindo ao Sistema de Gestão de Estoque</p>
+                            <p>Olá, {userName}! Bem-vindo ao Sistema de Gestão de Estoque</p>
                         </div>
                     </div>
                 </div>
@@ -443,7 +467,6 @@ function Home({ username, onLogout }) {
 
 // PropTypes
 Home.propTypes = {
-    username: PropTypes.string.isRequired,
     onLogout: PropTypes.func.isRequired
 };
 
